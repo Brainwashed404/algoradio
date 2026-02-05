@@ -3,227 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALGORAD.IO | Internet Radio</title>
+    <title>ALGORAD.IO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #fcfcf5;
-            --teal: #7ec2ad;
-            --teal-dark: #4a8b78;
-            --yellow: #e5b84a;
-            --black: #000000;
+        :root { --bg: #fcfcf5; --teal: #7ec2ad; --yellow: #e5b84a; }
+        body { 
+            background-color: #fcfcf5; 
+            font-family: 'JetBrains Mono', monospace; 
+            margin: 0; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
         }
-
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: #fcfcf5; /* Fallback for variable delay */
-            background-color: var(--bg);
-            margin: 0;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         .font-young-serif { font-family: 'Young Serif', serif; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00000020; border-radius: 10px; }
-
-        /* Animations */
-        .animate-overlay-in { animation: overlayIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes overlayIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .animate-brand-kinetic { 
-          opacity: 0; 
-          animation: brandKinetic 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
-        }
-        @keyframes brandKinetic {
-          0% { opacity: 0; transform: translateY(10px) scale(0.95); background-color: var(--teal); }
-          30% { background-color: var(--yellow); }
-          60% { background-color: var(--black); color: var(--bg); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .animate-in { animation: fadein 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
         .animate-vibrate { animation: vibrate 3.5s ease-in-out infinite; }
-        @keyframes vibrate {
-          0%, 100% { transform: translateZ(0) scale(1); }
-          50% { transform: translateZ(6px) scale(1.01); }
-        }
-
-        .animate-flip-y { animation: flip-3d-y 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-
-        .animate-flip-y-reverse { animation: flip-3d-y-reverse 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-y-reverse { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
-        
-        .animate-flip-x { animation: flip-3d-x 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-x { from { transform: rotateX(0deg); } to { transform: rotateX(360deg); } }
-
-        .animate-flip-x-reverse { animation: flip-3d-x-reverse 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-x-reverse { from { transform: rotateX(0deg); } to { transform: rotateX(-360deg); } }
-
-        .coin-container { perspective: 1200px; }
-        button:focus, a:focus { outline: none !important; }
+        @keyframes vibrate { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
-
-        const Icon = ({ name, size = 24, fill = "none", strokeWidth = 2, className = "" }) => {
-            const iconRef = useRef(null);
-            useEffect(() => {
-                if (window.lucide && iconRef.current) {
-                    iconRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
-                    window.lucide.createIcons({
-                        attrs: { width: size, height: size, fill: fill, 'stroke-width': strokeWidth }
-                    });
-                }
-            }, [name, size, fill, strokeWidth]);
-            return <span ref={iconRef} className={`inline-flex items-center justify-center leading-none ${className}`} />;
-        };
-
-        const MOODS = [
-            { emoji: "🥹", label: "Tender" }, { emoji: "🤪", label: "Pumped" },
-            { emoji: "🤯", label: "Weird" }, { emoji: "😴", label: "Low-energy" },
-            { emoji: "😎", label: "Confident" }, { emoji: "🧐", label: "Curious" },
-            { emoji: "☀️", label: "Clear" }, { emoji: "❄️", label: "Cold" }, { emoji: "☔️", label: "Rainy" }
-        ];
-
-        const GENRES = ["All", "Ambient + Downtempo", "ELECTRONIC + IDM", "Dub + Reggae", "Eclectic", "Hip Hop + RnB", "Jazz + Classical", "Jungle + UKG", "Rock + Indie", "Soul + Oldies"];
-
-        const GENRE_EMOJIS = {
-            "Ambient + Downtempo": "🔮", "ELECTRONIC + IDM": "⚡️", "Dub + Reggae": "🌴",
-            "Eclectic": "🧩", "Hip Hop + RnB": "🎤", "Jazz + Classical": "🎷",
-            "Jungle + UKG": "🚨", "Rock + Indie": "🤘", "Soul + Oldies": "🕰️"
-        };
-
-        const STATIONS = [
-            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", sourceUrl: "https://www.nts.live/infinite-mixtapes/slow-focus", desc: "Meditative and beatless: ambient, drone, and ragas.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "NTS Labyrinth", url: "https://stream-mixtape-geo.ntslive.net/mixtape31", sourceUrl: "https://www.nts.live/infinite-mixtapes/labyrinth", desc: "Dark, atmospheric, and experimental \"void\" music.", genre: "Ambient + Downtempo", moods: ["🤯", "🧐"] },
-            { name: "SomaFM Groove Salad", url: "https://ice.somafm.com/groovesalad", sourceUrl: "https://somafm.com/groovesalad", desc: "Downtempo beats and chilled grooves.", genre: "Ambient + Downtempo", moods: ["😴"] },
-            { name: "NTS 4 To The Floor", url: "https://stream-mixtape-geo.ntslive.net/mixtape5", sourceUrl: "https://www.nts.live/infinite-mixtapes/4-to-the-floor", desc: "Non-stop house and techno from past to present.", genre: "ELECTRONIC + IDM", moods: ["🤪"] },
-            { name: "Dublab", url: "https://dublab.out.airtime.pro:8000/dublab_a", sourceUrl: "https://dublab.com", desc: "Forward-thinking \"future roots\" radio blending global soul.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "NTS 1", url: "https://stream-relay-geo.ntslive.net/stream", sourceUrl: "https://www.nts.live", apiId: "1", desc: "Live from London, Manchester, LA and beyond.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "Soho Radio", url: "https://sohoradiomusic.doughunt.co.uk:8010/128mp3", sourceUrl: "https://www.sohoradiolondon.com", desc: "Grass-roots amplifier for music and culture.", genre: "Eclectic", moods: ["☀️"] }
-        ];
-
-        const SORTED_STATIONS = [...STATIONS].sort((a, b) => (a.sortName || a.name).localeCompare(b.sortName || b.name, 'en', { numeric: true, sensitivity: 'base' }));
+        const { useState, useEffect, useRef } = React;
 
         const App = () => {
-            const [currentStation, setCurrentStation] = useState(null);
-            const [displayedName, setDisplayedName] = useState("");
-            const [displayedDesc, setDisplayedDesc] = useState("");
+            const [hasStarted, setHasStarted] = useState(false);
             const [isPlaying, setIsPlaying] = useState(false);
-            const [isMuted, setIsMuted] = useState(false);
-            const [hasStarted, setHasStarted] = useState(false); 
-            const [isLoading, setIsLoading] = useState(false);
-            const [isIndexOpen, setIsIndexOpen] = useState(false);
-            const [isGenreOpen, setIsGenreOpen] = useState(false);
-            const [isMoodOpen, setIsMoodOpen] = useState(false);
             const [isAboutOpen, setIsAboutOpen] = useState(false);
-            const [selectedGenre, setSelectedGenre] = useState("All");
-            const [selectedMood, setSelectedMood] = useState("All");
-            const [isShuffleMode, setIsShuffleMode] = useState(false);
-            const [flipState, setFlipState] = useState(null);
-            const [error, setError] = useState(null);
-            
-            const audioTagRef = useRef(null);
-            const stationRefs = useRef(new Map());
-            const colors = { bg: '#fcfcf5', teal: '#7ec2ad', tealDark: '#4a8b78', yellow: '#e5b84a', black: '#000000' };
+            const audioRef = useRef(null);
 
-            const filteredStations = useMemo(() => SORTED_STATIONS.filter(s => (selectedGenre === "All" || s.genre === selectedGenre) && (selectedMood === "All" || s.moods?.includes(selectedMood))), [selectedGenre, selectedMood]);
-
-            useEffect(() => {
-                const startStation = SORTED_STATIONS[Math.floor(Math.random() * SORTED_STATIONS.length)];
-                setCurrentStation(startStation);
-                setDisplayedName(startStation.name);
-            }, []);
-
-            const triggerFlip = (type) => {
-                setFlipState(null);
-                requestAnimationFrame(() => {
-                    setFlipState(type);
-                    setTimeout(() => setFlipState(null), 900);
-                });
-            };
+            // Using NTS 1 as the default for stability
+            const defaultStation = "https://stream-relay-geo.ntslive.net/stream";
 
             const togglePlay = () => {
-                triggerFlip(isShuffleMode ? 'x' : 'y');
-                if (!hasStarted) { setHasStarted(true); setIsPlaying(true); return; }
-                if (isPlaying) { audioTagRef.current.pause(); setIsPlaying(false); }
-                else { audioTagRef.current.play().then(() => setIsPlaying(true)); }
-            };
-
-            const handleNext = () => {
-                const currentIndex = filteredStations.findIndex(s => s.url === currentStation.url);
-                const nextIndex = (currentIndex + 1) % filteredStations.length;
-                setCurrentStation(filteredStations[nextIndex]);
-                setDisplayedName(filteredStations[nextIndex].name);
-                triggerFlip('y');
+                if (!hasStarted) {
+                    setHasStarted(true);
+                    setIsPlaying(true);
+                } else {
+                    if (isPlaying) {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                    } else {
+                        audioRef.current.play();
+                        setIsPlaying(true);
+                    }
+                }
             };
 
             return (
-                <div className="fixed inset-0 flex flex-col items-center select-none transition-colors duration-500 overflow-hidden touch-none" style={{ backgroundColor: colors.bg }}>
-                    <audio ref={audioTagRef} src={currentStation?.url} muted={isMuted} autoPlay={hasStarted && isPlaying} />
+                <div className="flex flex-col items-center justify-between h-screen w-full p-8 text-black">
+                    <audio ref={audioRef} src={defaultStation} autoPlay={hasStarted} />
                     
-                    <header className="w-full h-[25vh] flex flex-col items-center justify-center text-center px-4 pt-16 z-10">
-                        <h2 className="font-young-serif text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter uppercase" style={{ color: colors.black }}>
-                            {!hasStarted ? <span>ALGORAD.<span style={{ color: colors.yellow }}>I</span><span style={{ color: colors.teal }}>O</span></span> : displayedName}
-                        </h2>
+                    <header className="text-center">
+                        <h1 className="font-young-serif text-5xl md:text-8xl uppercase tracking-tighter">
+                            ALGORAD.<span style={{color: '#e5b84a'}}>I</span><span style={{color: '#7ec2ad'}}>O</span>
+                        </h1>
                     </header>
 
-                    <main className="flex-grow flex items-center justify-center w-full space-x-12 z-10">
-                        <button onClick={togglePlay} className={`w-40 h-40 rounded-full border-8 border-black/5 shadow-2xl transition-all ${isPlaying ? 'animate-vibrate' : ''} ${flipState === 'y' ? 'animate-flip-y' : ''}`} style={{ backgroundColor: colors.teal }}>
-                             <Icon name={!hasStarted ? "power" : isPlaying ? "pause" : "play"} size="48" fill="black" />
+                    <main className="flex items-center justify-center">
+                        <button 
+                            onClick={togglePlay}
+                            className={`w-48 h-48 rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-95 ${isPlaying ? 'animate-vibrate' : ''}`}
+                            style={{ backgroundColor: '#7ec2ad' }}
+                        >
+                            <span className="font-bold uppercase tracking-widest">
+                                {!hasStarted ? 'Power On' : isPlaying ? 'Pause' : 'Play'}
+                            </span>
                         </button>
                     </main>
 
-                    <footer className="w-full h-[25vh] flex items-center justify-center gap-8 z-10">
-                        <FooterBtn icon="info" label="About" onClick={() => setIsAboutOpen(true)} />
-                        <FooterBtn icon="list" label="Index" onClick={() => setIsIndexOpen(true)} />
-                    </footer>
+                    <footer className="flex gap-10">
+                        <button onClick={() => setIsAboutOpen(true)} className="uppercase font-black text-xs tracking-widest opacity-50 hover:opacity-100">About</button>
+                    </footer >
 
-                    {isAboutOpen && <AboutOverlay onClose={() => setIsAboutOpen(false)} colors={colors} />}
+                    {isAboutOpen && (
+                        <div className="fixed inset-0 bg-white/95 z-50 p-10 overflow-y-auto">
+                            <button onClick={() => setIsAboutOpen(false)} className="absolute top-10 right-10 font-bold">CLOSE [X]</button>
+                            <div className="max-w-2xl mx-auto space-y-6">
+                                <h2 className="font-young-serif text-4xl uppercase">The Manifesto</h2>
+                                <p>Most modern algorithms are designed to keep you addicted to a screen, trapping you in an echo chamber while creators are left behind. ALGORAD.IO uses that technology for something better[cite: 120, 126].</p>
+                                <p>I was an original DJ at NTS Radio, hosting the Synth Hero Show from the station's launch. This project was co-coded with Gemini to highlight human curation[cite: 119, 121].</p>
+                                <p className="font-bold pt-4">– Tim Noakes [cite: 123]</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
-
-        const FooterBtn = ({ icon, label, onClick }) => (
-            <button onClick={onClick} className="flex flex-col items-center group outline-none">
-                <div className="w-14 h-14 rounded-full border border-black/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon name={icon} size="24" />
-                </div>
-                <span className="text-[10px] uppercase font-black mt-2 tracking-widest">{label}</span>
-            </button>
-        );
-
-        const AboutOverlay = ({ onClose, colors }) => (
-            <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl bg-white/90 text-black overflow-y-auto p-10">
-                <button onClick={onClose} className="absolute top-6 right-6"><Icon name="x" size="32" /></button>
-                <div className="max-w-2xl mx-auto space-y-8 py-10">
-                    <section className="space-y-6">
-                        <h4 className="font-young-serif text-4xl font-black uppercase">THE ALGORAD.IO MANIFESTO</h4>
-                        <p>Most modern algorithms are designed to keep you addicted to a screen, trapping you in an echo chamber while the creators who actually make the culture are left behind. ALGORAD.IO is an attempt to use that same technology for something better.</p>
-                        <p>The name is a nod to the fact that the entire internet is built on algorithms, but they aren't all "sketchy" by design. Some algorithms are beautiful—the ones that carry high-fidelity pirate radio streams across oceans, or the tools that allow a single person to build a platform to celebrate independent creativity.</p>
-                        
-                        <h5 className="font-young-serif text-2xl font-black uppercase pt-6">The Curation</h5>
-                        <p>I’ve spent my lifetime obsessed with the radio. My journey began in the pirate-spirited world of student radio, leading to a career scouting talent for John Kennedy’s X-Posure show on Radio X, curating for Dazed Digital, and leading the editorial team at Boiler Room.</p>
-                        <p>I was an original DJ at NTS Radio, hosting the Synth Hero Show from the very first transmissions. This project was co-coded with AI to bring my favourite stations together. I hope you enjoy it.</p>
-                        <p className="font-black">– Tim Noakes</p>
-                    </section>
-                </div>
-            </div>
-        );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
