@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALGORAD.IO | Internet Radio</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --bg: #fcfcf5;
@@ -20,7 +17,6 @@
             --yellow: #e5b84a;
             --black: #000000;
         }
-
         body {
             font-family: 'JetBrains Mono', monospace;
             background-color: var(--bg);
@@ -28,34 +24,9 @@
             margin: 0;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
         }
-
         .font-young-serif { font-family: 'Young Serif', serif; }
-
-        /* Smooth UI Transitions */
-        .overlay-backdrop {
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            background-color: rgba(252, 252, 245, 0.9);
-        }
-
-        /* The "Coin" Animation */
-        .coin-container { perspective: 1200px; }
-        
-        @keyframes vibrate {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02) translateY(-2px); }
-        }
-        .is-vibrating { animation: vibrate 3.5s ease-in-out infinite; }
-
-        /* Animations for transitions */
-        .animate-flip-y { animation: flip-y 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-
-        /* Grainy Texture */
         .grain {
             position: fixed;
             inset: 0;
@@ -64,6 +35,22 @@
             opacity: 0.04;
             background-image: url('https://grainy-gradients.vercel.app/noise.svg');
         }
+        .overlay-backdrop {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background-color: rgba(252, 252, 245, 0.9);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        
+        /* Fixed Aspect for the Player */
+        .player-container { height: 40vh; display: flex; align-items: center; justify-content: center; }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02) translateY(-2px); }
+        }
+        .is-vibrating { animation: vibrate 3.5s ease-in-out infinite; }
     </style>
 </head>
 <body>
@@ -72,7 +59,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // Reuse your Icon helper for Lucide
         const Icon = ({ name, size = 24, fill = "none", strokeWidth = 2, className = "" }) => {
             const iconRef = useRef(null);
             useEffect(() => {
@@ -82,28 +68,38 @@
                         attrs: { width: size, height: size, fill, 'stroke-width': strokeWidth }
                     });
                 }
-            }, [name, size, fill, strokeWidth]);
-            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
+            }, [name]);
+            return <span ref={iconRef} className={`inline-flex items-center justify-center leading-none ${className}`} />;
         };
 
-        // --- DATA (Shortened for preview, but keep your full list in your final file) ---
         const MOODS = [
             { emoji: "🤪", label: "Pumped" }, { emoji: "😴", label: "Low-energy" }, 
             { emoji: "😎", label: "Confident" }, { emoji: "☀️", label: "Clear" },
-            { emoji: "☔️", label: "Rainy" }, { emoji: "🤯", label: "Weird" }
+            { emoji: "☔️", label: "Rainy" }, { emoji: "🤯", label: "Weird" },
+            { emoji: "🧐", label: "Curious" }, { emoji: "🥹", label: "Tender" },
+            { emoji: "❄️", label: "Cold" }
         ];
 
+        const GENRES = ["All", "Ambient + Downtempo", "ELECTRONIC + IDM", "Dub + Reggae", "Eclectic", "Hip Hop + RnB", "Jazz + Classical", "Jungle + UKG", "Rock + Indie", "Soul + Oldies"];
+
         const STATIONS = [
-            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", desc: "Meditative and beatless ambient.", genre: "Ambient", moods: ["😴"] },
-            { name: "SomaFM Groove Salad", url: "https://ice.somafm.com/groovesalad", desc: "Chilled downtempo beats.", genre: "Ambient", moods: ["😴", "☀️"] },
-            { name: "UKG Radio", url: "https://streams.radio.co/s9549b306a/listen", desc: "Authentic London garage.", genre: "Electronic", moods: ["🤪"] },
-            { name: "NTS Island Time", url: "https://stream-mixtape-geo.ntslive.net/mixtape21", desc: "Reggae and rocksteady.", genre: "Dub", moods: ["😎", "☀️"] }
+            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", sourceUrl: "https://www.nts.live/infinite-mixtapes/slow-focus", desc: "Meditative and beatless: ambient, drone, and ragas.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
+            { name: "SomaFM Groove Salad", url: "https://ice.somafm.com/groovesalad", sourceUrl: "https://somafm.com/groovesalad", desc: "Downtempo beats and chilled grooves.", genre: "Ambient + Downtempo", moods: ["😴"] },
+            { name: "UKG Radio", url: "https://streams.radio.co/s9549b306a/listen", sourceUrl: "https://www.ukgradio.co.uk/", desc: "High-quality breakbeats and authentic garage 24/7.", genre: "Jungle + UKG", moods: ["🤪"] },
+            { name: "NTS Island Time", url: "https://stream-mixtape-geo.ntslive.net/mixtape21", sourceUrl: "https://www.nts.live/infinite-mixtapes/island-time", desc: "Easy skanking with reggae, dub, and rocksteady.", genre: "Dub + Reggae", moods: ["😎", "☀️"] },
+            { name: "WEFUNK", url: "https://s-09.wefunkradio.com:8000/wefunk64.mp3", sourceUrl: "https://www.wefunkradio.com", desc: "Legendary funk, soul and hip-hop radio show.", genre: "Hip Hop + RnB", moods: ["☔️"] },
+            { name: "Radio Swiss Jazz", url: "https://livestreaming-node-3.srg-ssr.ch/srgssr/rsj/mp3/128", sourceUrl: "https://radioswissjazz.ch", desc: "Smooth jazz, soul, and blues standards.", genre: "Jazz + Classical", moods: ["🥹", "☔️"] },
+            { name: "Dublab", url: "https://dublab.out.airtime.pro:8000/dublab_a", sourceUrl: "https://dublab.com", desc: "Forward-thinking global soul.", genre: "Eclectic", moods: ["☀️"] },
+            { name: "WFMU", url: "https://stream0.wfmu.org/freeform-128k.mp3", sourceUrl: "https://wfmu.org", desc: "Freeform radio and uncategorisable strangeness.", genre: "Eclectic", moods: ["🧐", "☔️"] }
         ];
 
         const App = () => {
-            const [isPlaying, setIsPlaying] = useState(false);
             const [currentStation, setCurrentStation] = useState(STATIONS[0]);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
             const [hasStarted, setHasStarted] = useState(false);
+            const [isIndexOpen, setIsIndexOpen] = useState(false);
+            const [selectedGenre, setSelectedGenre] = useState("All");
             const audioRef = useRef(null);
 
             const togglePlay = () => {
@@ -114,60 +110,93 @@
                 if (isPlaying) {
                     audioRef.current.pause();
                 } else {
-                    audioRef.current.play();
+                    audioRef.current.play().catch(e => console.log("Stream error: ", e));
                 }
                 setIsPlaying(!isPlaying);
             };
 
-            return (
-                <div className="fixed inset-0 flex flex-col items-center justify-between p-8">
-                    <div className="grain" />
-                    <audio ref={audioRef} />
+            const switchStation = (station) => {
+                setCurrentStation(station);
+                if (hasStarted) {
+                    audioRef.current.src = station.url;
+                    audioRef.current.play();
+                    setIsPlaying(true);
+                }
+                setIsIndexOpen(false);
+            };
 
-                    {/* Header */}
-                    <header className="text-center z-10">
-                        <h1 className="font-young-serif text-6xl md:text-8xl uppercase tracking-tighter">
+            return (
+                <div className="fixed inset-0 flex flex-col items-center justify-between p-6">
+                    <div className="grain" />
+                    <audio ref={audioRef} muted={isMuted} />
+
+                    {/* Header: Dynamic Sizing */}
+                    <header className="h-[25vh] flex flex-col justify-center items-center text-center z-10 w-full overflow-hidden">
+                        <h1 className="font-young-serif text-5xl md:text-8xl uppercase tracking-tighter leading-none">
                             ALGORAD.<span style={{color: 'var(--yellow)'}}>I</span><span style={{color: 'var(--teal)'}}>O</span>
                         </h1>
                         {hasStarted && (
-                            <div className="mt-4 animate-in fade-in">
-                                <p className="text-2xl font-young-serif uppercase tracking-tight">{currentStation.name}</p>
-                                <p className="text-xs opacity-50 uppercase tracking-widest mt-1">{currentStation.desc}</p>
+                            <div className="mt-4 px-4">
+                                <h2 className="text-xl md:text-3xl font-young-serif uppercase truncate max-w-md">{currentStation.name}</h2>
+                                <p className="text-[10px] opacity-40 uppercase tracking-[0.2em] mt-1">{currentStation.desc}</p>
                             </div>
                         )}
                     </header>
 
-                    {/* Middle: The Big Button */}
-                    <main className="flex items-center justify-center z-10">
+                    {/* Main Player Area */}
+                    <div className="player-container z-10">
                         <button 
                             onClick={togglePlay}
-                            className={`w-48 h-48 rounded-full shadow-2xl transition-all active:scale-95 flex items-center justify-center ${isPlaying ? 'is-vibrating' : ''}`}
-                            style={{ backgroundColor: 'var(--teal)', border: '8px solid var(--black)' }}
+                            className={`w-44 h-44 md:w-56 md:h-56 rounded-full shadow-2xl transition-all active:scale-90 flex items-center justify-center ${isPlaying ? 'is-vibrating' : ''}`}
+                            style={{ backgroundColor: 'var(--teal)', border: '10px solid var(--black)' }}
                         >
-                            <div className="w-32 h-32 rounded-full bg-black flex items-center justify-center text-[#fcfcf5]">
+                            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-black flex items-center justify-center text-[#fcfcf5]">
                                 {isPlaying ? <Icon name="pause" size={48} fill="currentColor" /> : <Icon name="play" size={48} className="ml-2" fill="currentColor" />}
                             </div>
                         </button>
-                    </main>
+                    </div>
 
-                    {/* Footer */}
-                    <footer className="w-full max-w-2xl flex justify-around items-center z-10 pb-8">
-                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
-                            <Icon name="shuffle" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Shuffle</span>
-                        </button>
-                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
-                            <Icon name="smile" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Vibe</span>
-                        </button>
-                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
-                            <Icon name="list" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Index</span>
-                        </button>
+                    {/* Footer Controls */}
+                    <footer className="h-[20vh] w-full max-w-xl flex justify-around items-center z-10">
+                        <FooterBtn icon={isMuted ? "volume-x" : "volume-2"} label="Mute" onClick={() => setIsMuted(!isMuted)} active={isMuted} />
+                        <FooterBtn icon="list" label="Index" onClick={() => setIsIndexOpen(true)} />
+                        <FooterBtn icon="info" label="About" onClick={() => {}} />
                     </footer>
+
+                    {/* Simple Index Overlay */}
+                    {isIndexOpen && (
+                        <div className="fixed inset-0 z-[100] overlay-backdrop flex flex-col p-8 overflow-y-auto custom-scrollbar">
+                            <button onClick={() => setIsIndexOpen(false)} className="self-end p-4"><Icon name="x" size={32} /></button>
+                            <div className="max-w-md mx-auto w-full space-y-4">
+                                <h3 className="font-young-serif text-3xl uppercase mb-8">Stations</h3>
+                                {STATIONS.map(s => (
+                                    <button 
+                                        key={s.name} 
+                                        onClick={() => switchStation(s)}
+                                        className="w-full text-left p-4 border-b border-black/5 flex justify-between items-center hover:bg-black/5 transition-colors"
+                                    >
+                                        <div>
+                                            <div className="font-young-serif text-lg uppercase">{s.name}</div>
+                                            <div className="text-[10px] opacity-50 uppercase">{s.genre}</div>
+                                        </div>
+                                        {currentStation.name === s.name && <div className="w-2 h-2 rounded-full bg-[#e5b84a]" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
+
+        const FooterBtn = ({ icon, label, onClick, active }) => (
+            <button onClick={onClick} className="flex flex-col items-center gap-2 group outline-none">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 ${active ? 'bg-black text-white' : 'border border-black/10'}`}>
+                    <Icon name={icon} size={20} />
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100">{label}</span>
+            </button>
+        );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
