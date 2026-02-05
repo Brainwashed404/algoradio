@@ -1,4 +1,4 @@
-# algoradio
+# ALGORAD.IO
 Filter the world's best indie radio stations by mood, genre, or weather. Curated by a human, built by an algorithm.
 
 Today’s musical algorithms are designed to keep us addicted to subscriptions and to push major label artist drops, trapping us in soul-numbing content loops while the indie artists and communities who actually create music culture are left behind.
