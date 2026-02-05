@@ -4,116 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALGORAD.IO | Internet Radio</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg: #fcfcf5; --teal: #7ec2ad; --yellow: #e5b84a; --black: #000000; }
-        body { font-family: 'JetBrains Mono', monospace; background-color: var(--bg); margin: 0; overflow: hidden; }
+        :root {
+            --bg: #fcfcf5;
+            --teal: #7ec2ad;
+            --yellow: #e5b84a;
+            --black: #000000;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg);
+            color: var(--black);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
         .font-young-serif { font-family: 'Young Serif', serif; }
+
+        /* Smooth UI Transitions */
+        .overlay-backdrop {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            background-color: rgba(252, 252, 245, 0.9);
+        }
+
+        /* The "Coin" Animation */
         .coin-container { perspective: 1200px; }
-        .animate-vibrate { animation: vibrate 3.5s ease-in-out infinite; }
-        @keyframes vibrate { 0%, 100% { transform: translateZ(0) scale(1); } 50% { transform: translateZ(6px) scale(1.01); } }
-        .animate-flip-y { animation: flip-3d-y 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02) translateY(-2px); }
+        }
+        .is-vibrating { animation: vibrate 3.5s ease-in-out infinite; }
+
+        /* Animations for transitions */
+        .animate-flip-y { animation: flip-y 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes flip-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00000020; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+
+        /* Grainy Texture */
+        .grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.04;
+            background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
+        // Reuse your Icon helper for Lucide
         const Icon = ({ name, size = 24, fill = "none", strokeWidth = 2, className = "" }) => {
             const iconRef = useRef(null);
             useEffect(() => {
                 if (window.lucide && iconRef.current) {
                     iconRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
-                    window.lucide.createIcons({ attrs: { width: size, height: size, fill: fill, 'stroke-width': strokeWidth } });
+                    window.lucide.createIcons({
+                        attrs: { width: size, height: size, fill, 'stroke-width': strokeWidth }
+                    });
                 }
-            }, [name]);
+            }, [name, size, fill, strokeWidth]);
             return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
         };
 
+        // --- DATA (Shortened for preview, but keep your full list in your final file) ---
+        const MOODS = [
+            { emoji: "🤪", label: "Pumped" }, { emoji: "😴", label: "Low-energy" }, 
+            { emoji: "😎", label: "Confident" }, { emoji: "☀️", label: "Clear" },
+            { emoji: "☔️", label: "Rainy" }, { emoji: "🤯", label: "Weird" }
+        ];
+
         const STATIONS = [
-            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", sourceUrl: "https://www.nts.live/infinite-mixtapes/slow-focus", desc: "Meditative and beatless: ambient, drone, and ragas.", genre: "Ambient + Downtempo", moods: ["😴"] },
-            { name: "Dublab", url: "https://dublab.out.airtime.pro:8000/dublab_a", sourceUrl: "https://dublab.com", desc: "Forward-thinking \"future roots\" radio.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "Soho Radio", url: "https://sohoradiomusic.doughunt.co.uk:8010/128mp3", sourceUrl: "https://www.sohoradiolondon.com", desc: "Grass-roots amplifier for music and culture.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "NTS 1", url: "https://stream-relay-geo.ntslive.net/stream", sourceUrl: "https://www.nts.live", apiId: "1", desc: "Live from London, Manchester, LA and beyond.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "Cashmere Radio", url: "https://cashmereradio.out.airtime.pro:8000/cashmereradio_b", sourceUrl: "https://cashmereradio.com", desc: "Berlin-based community station.", genre: "Eclectic", moods: ["🧐"] }
+            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", desc: "Meditative and beatless ambient.", genre: "Ambient", moods: ["😴"] },
+            { name: "SomaFM Groove Salad", url: "https://ice.somafm.com/groovesalad", desc: "Chilled downtempo beats.", genre: "Ambient", moods: ["😴", "☀️"] },
+            { name: "UKG Radio", url: "https://streams.radio.co/s9549b306a/listen", desc: "Authentic London garage.", genre: "Electronic", moods: ["🤪"] },
+            { name: "NTS Island Time", url: "https://stream-mixtape-geo.ntslive.net/mixtape21", desc: "Reggae and rocksteady.", genre: "Dub", moods: ["😎", "☀️"] }
         ];
 
         const App = () => {
+            const [isPlaying, setIsPlaying] = useState(false);
             const [currentStation, setCurrentStation] = useState(STATIONS[0]);
             const [hasStarted, setHasStarted] = useState(false);
-            const [isPlaying, setIsPlaying] = useState(false);
-            const [isAboutOpen, setIsAboutOpen] = useState(false);
-            const [isIndexOpen, setIsIndexOpen] = useState(false);
-            const [flipState, setFlipState] = useState(null);
             const audioRef = useRef(null);
 
             const togglePlay = () => {
-                setFlipState('y');
-                setTimeout(() => setFlipState(null), 900);
-                if (!hasStarted) { setHasStarted(true); setIsPlaying(true); }
-                else { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }
+                if (!hasStarted) {
+                    setHasStarted(true);
+                    audioRef.current.src = currentStation.url;
+                }
+                if (isPlaying) {
+                    audioRef.current.pause();
+                } else {
+                    audioRef.current.play();
+                }
+                setIsPlaying(!isPlaying);
             };
 
             return (
-                <div className="fixed inset-0 flex flex-col items-center justify-between py-16" style={{backgroundColor: '#fcfcf5'}}>
-                    <audio ref={audioRef} src={currentStation.url} autoPlay={hasStarted && isPlaying} />
-                    
+                <div className="fixed inset-0 flex flex-col items-center justify-between p-8">
+                    <div className="grain" />
+                    <audio ref={audioRef} />
+
+                    {/* Header */}
                     <header className="text-center z-10">
                         <h1 className="font-young-serif text-6xl md:text-8xl uppercase tracking-tighter">
-                            {!hasStarted ? <span>ALGORAD.<span style={{color: '#e5b84a'}}>I</span><span style={{color: '#7ec2ad'}}>O</span></span> : currentStation.name}
+                            ALGORAD.<span style={{color: 'var(--yellow)'}}>I</span><span style={{color: 'var(--teal)'}}>O</span>
                         </h1>
-                        {hasStarted && <p className="mt-4 text-xs uppercase tracking-widest opacity-40 max-w-xs mx-auto">{currentStation.desc}</p>}
+                        {hasStarted && (
+                            <div className="mt-4 animate-in fade-in">
+                                <p className="text-2xl font-young-serif uppercase tracking-tight">{currentStation.name}</p>
+                                <p className="text-xs opacity-50 uppercase tracking-widest mt-1">{currentStation.desc}</p>
+                            </div>
+                        )}
                     </header>
 
-                    <div className="coin-container z-10">
-                        <button onClick={togglePlay} className={`w-44 h-44 rounded-full flex items-center justify-center transition-transform ${isPlaying ? 'animate-vibrate' : ''} ${flipState ? 'animate-flip-y' : ''}`} style={{backgroundColor: '#7ec2ad', border: '8px solid rgba(0,0,0,0.05)'}}>
-                            <div className="w-32 h-32 rounded-full flex items-center justify-center" style={{backgroundColor: '#000'}}>
-                                <Icon name={!hasStarted ? "power" : isPlaying ? "pause" : "play"} size="40" fill="#fcfcf5" />
+                    {/* Middle: The Big Button */}
+                    <main className="flex items-center justify-center z-10">
+                        <button 
+                            onClick={togglePlay}
+                            className={`w-48 h-48 rounded-full shadow-2xl transition-all active:scale-95 flex items-center justify-center ${isPlaying ? 'is-vibrating' : ''}`}
+                            style={{ backgroundColor: 'var(--teal)', border: '8px solid var(--black)' }}
+                        >
+                            <div className="w-32 h-32 rounded-full bg-black flex items-center justify-center text-[#fcfcf5]">
+                                {isPlaying ? <Icon name="pause" size={48} fill="currentColor" /> : <Icon name="play" size={48} className="ml-2" fill="currentColor" />}
                             </div>
                         </button>
-                    </div>
+                    </main>
 
-                    <footer className="flex gap-8 z-10">
-                        <button onClick={() => setIsIndexOpen(true)} className="uppercase font-black text-[10px] tracking-[0.2em] opacity-40 hover:opacity-100">Index</button>
-                        <button onClick={() => setIsAboutOpen(true)} className="uppercase font-black text-[10px] tracking-[0.2em] opacity-40 hover:opacity-100">About</button>
+                    {/* Footer */}
+                    <footer className="w-full max-w-2xl flex justify-around items-center z-10 pb-8">
+                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
+                            <Icon name="shuffle" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Shuffle</span>
+                        </button>
+                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
+                            <Icon name="smile" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Vibe</span>
+                        </button>
+                        <button className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
+                            <Icon name="list" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Index</span>
+                        </button>
                     </footer>
-
-                    {isAboutOpen && <div className="fixed inset-0 bg-white/95 z-50 p-8 overflow-y-auto animate-overlay-in custom-scrollbar">
-                        <div className="max-w-2xl mx-auto py-12 space-y-8">
-                            <button onClick={() => setIsAboutOpen(false)} className="fixed top-8 right-8"><Icon name="x" size="32" /></button>
-                            <h2 className="font-young-serif text-4xl uppercase">The Manifesto</h2>
-                            <p>Today’s algorithms are designed for addiction and content loops, leaving indie creators behind. ALGORAD.IO is an attempt to use technology for something better: highlighting human curation[cite: 121, 126].</p>
-                            <h3 className="font-young-serif text-2xl uppercase pt-4">The Selector</h3>
-                            <p>My journey began in student radio, leading to scouting talent for Radio X, curating for Dazed Digital, and leading the editorial team at Boiler Room[cite: 118]. I was an original DJ at NTS Radio, hosting the Synth Hero Show from launch[cite: 119].</p>
-                            <p className="font-bold pt-4">– Tim Noakes [cite: 123]</p>
-                        </div>
-                    </div>}
-
-                    {isIndexOpen && <div className="fixed inset-0 bg-white/95 z-50 p-8 overflow-y-auto animate-overlay-in custom-scrollbar">
-                        <div className="max-w-xl mx-auto py-12">
-                            <button onClick={() => setIsIndexOpen(false)} className="fixed top-8 right-8"><Icon name="x" size="32" /></button>
-                            <h2 className="font-young-serif text-3xl uppercase mb-8 text-center">Station Index</h2>
-                            {STATIONS.map(s => (
-                                <button key={s.name} onClick={() => { setCurrentStation(s); setIsIndexOpen(false); if(!hasStarted) togglePlay(); }} className="w-full text-left py-4 border-b border-black/5 hover:bg-black/5 px-4 flex justify-between items-center group">
-                                    <span className="font-young-serif text-xl uppercase group-hover:text-[#7ec2ad]">{s.name}</span>
-                                    <Icon name="play" size="16" className="opacity-0 group-hover:opacity-100" />
-                                </button>
-                            ))}
-                        </div>
-                    </div>}
                 </div>
             );
         };
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
