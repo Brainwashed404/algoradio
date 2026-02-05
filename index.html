@@ -4,785 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALGORAD.IO | Internet Radio</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
-        
-        :root {
-            --bg: #fcfcf5;
-            --teal: #7ec2ad;
-            --teal-dark: #4a8b78;
-            --yellow: #e5b84a;
-            --black: #000000;
-        }
-
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: var(--bg);
-            margin: 0;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        :root { --bg: #fcfcf5; --teal: #7ec2ad; --yellow: #e5b84a; --black: #000000; }
+        body { font-family: 'JetBrains Mono', monospace; background-color: var(--bg); margin: 0; overflow: hidden; }
         .font-young-serif { font-family: 'Young Serif', serif; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00000020; border-radius: 10px; }
-
-        /* Animations */
-        .animate-overlay-in { animation: overlayIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes overlayIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .animate-brand-kinetic { 
-          opacity: 0; 
-          animation: brandKinetic 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
-        }
-        @keyframes brandKinetic {
-          0% { opacity: 0; transform: translateY(10px) scale(0.95); background-color: var(--teal); }
-          30% { background-color: var(--yellow); }
-          60% { background-color: var(--black); color: var(--bg); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .animate-in { animation: fadein 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        @keyframes fadein { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
+        .coin-container { perspective: 1200px; }
         .animate-vibrate { animation: vibrate 3.5s ease-in-out infinite; }
-        @keyframes vibrate {
-          0%, 100% { transform: translateZ(0) scale(1); }
-          50% { transform: translateZ(6px) scale(1.01); }
-        }
-
+        @keyframes vibrate { 0%, 100% { transform: translateZ(0) scale(1); } 50% { transform: translateZ(6px) scale(1.01); } }
         .animate-flip-y { animation: flip-3d-y 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes flip-3d-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-
-        .animate-flip-y-reverse { animation: flip-3d-y-reverse 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-y-reverse { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
-        
-        .animate-flip-x { animation: flip-3d-x 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-x { from { transform: rotateX(0deg); } to { transform: rotateX(360deg); } }
-
-        .animate-flip-x-reverse { animation: flip-3d-x-reverse 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes flip-3d-x-reverse { from { transform: rotateX(0deg); } to { transform: rotateX(-360deg); } }
-
-        .coin-container { perspective: 1200px; }
-        button:focus, a:focus { outline: none !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00000020; border-radius: 10px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        /**
-         * Safe Icon Component
-         */
         const Icon = ({ name, size = 24, fill = "none", strokeWidth = 2, className = "" }) => {
             const iconRef = useRef(null);
-
             useEffect(() => {
                 if (window.lucide && iconRef.current) {
                     iconRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
-                    window.lucide.createIcons({
-                        attrs: {
-                            width: size,
-                            height: size,
-                            fill: fill,
-                            'stroke-width': strokeWidth
-                        }
-                    });
+                    window.lucide.createIcons({ attrs: { width: size, height: size, fill: fill, 'stroke-width': strokeWidth } });
                 }
-            }, [name, size, fill, strokeWidth]);
-
-            return <span ref={iconRef} className={`inline-flex items-center justify-center leading-none ${className}`} />;
-        };
-
-        const MOODS = [
-            { emoji: "🥹", label: "Tender" },
-            { emoji: "🤪", label: "Pumped" },
-            { emoji: "🤯", label: "Weird" },
-            { emoji: "😴", label: "Low-energy" },
-            { emoji: "😎", label: "Confident" },
-            { emoji: "🧐", label: "Curious" },
-            { emoji: "☀️", label: "Clear" },
-            { emoji: "❄️", label: "Cold" },
-            { emoji: "☔️", label: "Rainy" }
-        ];
-
-        const GENRES = [
-            "All", 
-            "Ambient + Downtempo", 
-            "ELECTRONIC + IDM", 
-            "Dub + Reggae", 
-            "Eclectic", 
-            "Hip Hop + RnB", 
-            "Jazz + Classical", 
-            "Jungle + UKG",
-            "Rock + Indie",
-            "Soul + Oldies"
-        ];
-
-        const GENRE_EMOJIS = {
-            "Ambient + Downtempo": "🔮",
-            "ELECTRONIC + IDM": "⚡️",
-            "Dub + Reggae": "🌴",
-            "Eclectic": "🧩",
-            "Hip Hop + RnB": "🎤",
-            "Jazz + Classical": "🎷",
-            "Jungle + UKG": "🚨",
-            "Rock + Indie": "🤘",
-            "Soul + Oldies": "🕰️"
+            }, [name]);
+            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
         };
 
         const STATIONS = [
-            // Ambient + Downtempo
-            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", sourceUrl: "https://www.nts.live/infinite-mixtapes/slow-focus", desc: "Meditative and beatless: ambient, drone, and ragas.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "NTS Labyrinth", url: "https://stream-mixtape-geo.ntslive.net/mixtape31", sourceUrl: "https://www.nts.live/infinite-mixtapes/labyrinth", desc: "Dark, atmospheric, and experimental \"void\" music.", genre: "Ambient + Downtempo", moods: ["🤯", "🧐"] },
-            { name: "NTS Field Recordings", url: "https://stream-mixtape-geo.ntslive.net/mixtape23", sourceUrl: "https://www.nts.live/infinite-mixtapes/field-recordings", desc: "Natural ambience and environmental sounds.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "SomaFM Groove Salad", url: "https://ice.somafm.com/groovesalad", sourceUrl: "https://somafm.com/groovesalad", desc: "Downtempo beats and chilled grooves.", genre: "Ambient + Downtempo", moods: ["😴"] },
-            { name: "SomaFM Drone Zone", url: "https://ice.somafm.com/dronezone", sourceUrl: "https://somafm.com/dronezone", desc: "Served best chilled. Atmospheric textures with minimal beats.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "SomaFM Deep Space One", url: "https://ice.somafm.com/deepspaceone", sourceUrl: "https://somafm.com/deepspaceone/", desc: "Deep ambient electronic and experimental space music.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "SomaFM Space Station Soma", url: "https://ice.somafm.com/spacestation", sourceUrl: "https://somafm.com/spacestation", desc: "Tune in, turn on, space out. Ambient electronica.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "SomaFM Mission Control", url: "https://ice.somafm.com/missioncontrol", sourceUrl: "https://somafm.com/missioncontrol", desc: "Ambient music mixed with real-time NASA audio.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "Radio Azathoth Revival", url: "https://cast4.asurahosting.com/proxy/aadu/stream", sourceUrl: "https://cast4.asurahosting.com/start/aadu/", desc: "Atmospheric mixes inspired by cosmic chaos.", genre: "Ambient + Downtempo", moods: ["😴", "❄️"] },
-            { name: "Resonance FM", url: "https://stream.resonance.fm/resonance", sourceUrl: "https://www.resonancefm.com", desc: "London's artist-led broadcast for experimental music.", genre: "Ambient + Downtempo", moods: ["🧐"] },
-            { name: "Resonance Extra", url: "https://stream.resonance.fm/resonance-extra", sourceUrl: "https://extra.resonance.fm", desc: "Dedicated strictly to sound art and experimental musics.", genre: "Ambient + Downtempo", moods: ["🧐", "❄️"] },
-            { name: "Dinamo Sleep", url: "https://channels.dinamo.fm/sleep-aac32", sourceUrl: "https://dinamo.fm/content/4/channels/", desc: "Lullabies for adults. Our selection of the best ambient electronica.", genre: "Ambient + Downtempo", moods: ["😴", "🥹"] },
-
-            // ELECTRONIC + IDM
-            { name: "NTS 4 To The Floor", url: "https://stream-mixtape-geo.ntslive.net/mixtape5", sourceUrl: "https://www.nts.live/infinite-mixtapes/4-to-the-floor", desc: "Non-stop house and techno from past to present.", genre: "ELECTRONIC + IDM", moods: ["🤪"] },
-            { name: "NTS Sweat", url: "https://stream-mixtape-geo.ntslive.net/mixtape24", sourceUrl: "https://www.nts.live/infinite-mixtapes/sweat", desc: "High-energy international party music and club sounds.", genre: "ELECTRONIC + IDM", moods: ["🤪"] },
-            { name: "SomaFM Lush", url: "https://ice.somafm.com/lush", sourceUrl: "https://somafm.com/lush", desc: "Sensuous and mellow female vocals.", genre: "ELECTRONIC + IDM", moods: ["🥹", "☔️"] },
-            { name: "SomaFM Underground 80s", url: "https://ice.somafm.com/u80s", sourceUrl: "https://somafm.com/u80s", desc: "Early 80s UK Synthpop and New Wave.", genre: "ELECTRONIC + IDM", moods: ["😎"] },
-            { name: "SomaFM Beat Blender", url: "https://ice.somafm.com/beatblender", sourceUrl: "https://somafm.com/beatblender", desc: "Late-night blend of deep house and downtempo chill.", genre: "ELECTRONIC + IDM", moods: ["😎", "☀️"] },
-            { name: "SomaFM Cliqhop idm", url: "https://ice.somafm.com/cliqhop", sourceUrl: "https://somafm.com/cliqhop", desc: "Blips'n'beeps backed mostly with beats.", genre: "ELECTRONIC + IDM", moods: ["🤯", "🧐"] },
-            { name: "SomaFM Vaporwaves", url: "https://ice.somafm.com/vaporwaves", sourceUrl: "https://somafm.com/vaporwaves/", desc: "Hazy, nostalgic, and digitally processed sounds.", genre: "ELECTRONIC + IDM", moods: ["😎"] },
-            { name: "Dinamo Discotheque", url: "https://channels.dinamo.fm/discotheque-aac32", sourceUrl: "https://channels.dinamo.fm/discotheque-aac32", desc: "Let's go back to Studio 54.", genre: "ELECTRONIC + IDM", moods: ["🤪", "😎"] },
-
-            // Dub + Reggae
-            { name: "NTS Island Time", url: "https://stream-mixtape-geo.ntslive.net/mixtape21", sourceUrl: "https://www.nts.live/infinite-mixtapes/island-time", desc: "Easy skanking with reggae, dub, and rocksteady.", genre: "Dub + Reggae", moods: ["😎", "☀️"] },
-            { name: "SomaFM Heavyweight Reggae", url: "https://ice.somafm.com/reggae", sourceUrl: "https://somafm.com/reggae", desc: "Reggae, Ska, and Rocksteady classic deep tracks.", genre: "Dub + Reggae", moods: ["😎"] },
-            { name: "Reggae Arte", url: "https://listen.radioking.com/radio/269104/stream/314461", sourceUrl: "https://reggaearte.wixsite.com/accueil", desc: "Roots and Dub diffusion featuring exclusive soundsystem sessions.", genre: "Dub + Reggae", moods: ["😎"] },
-            { name: "Dr Dick's Dub Shack", url: "https://streamer.radio.co/s0635c8b0d/listen", sourceUrl: "https://drdicksdubshack.com/index.html", desc: "Bermuda-based broadcast playing all species of dub.", genre: "Dub + Reggae", moods: ["😎"] },
-            { name: "Only Dub Radio", url: "https://puma.streemlion.com:5500/stream", sourceUrl: "https://www.dubsideradio.com/", desc: "Jamaican pioneers to the new generation of global sound systems.", genre: "Dub + Reggae", moods: ["😎"] },
-
-            // Hip Hop + RnB
-            { name: "NTS Low Key", url: "https://stream-mixtape-geo.ntslive.net/mixtape2", sourceUrl: "https://www.nts.live/infinite-mixtapes/100-percent-hip-hop", desc: "Pure rap and hip-hop culture, past and present.", genre: "Hip Hop + RnB", moods: ["😎"] },
-            { name: "WEFUNK", url: "https://s-09.wefunkradio.com:8000/wefunk64.mp3", sourceUrl: "https://www.wefunkradio.com", desc: "Legendary funk, soul and hip-hop radio show.", genre: "Hip Hop + RnB", moods: ["☔️"] },
-            { name: "Illsoundvibe", url: "https://15113.live.streamtheworld.com/SAM03AAC73.aac", sourceUrl: "https://illsoundvibe.com", desc: "Classic hip hop, from then to now.", genre: "Hip Hop + RnB", moods: ["😎"] },
-            { name: "98DABOMB", sortName: "Ninety Eight DABOMB", url: "https://stream-175.zeno.fm/csqp40hg97nuv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJjc3FwNDBoZzk3bnV2IiwiaG9zdCI6InN0cmVhbS0xNzUuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6ImtnLWVaYzdRVEotel9mZmQ0b1VxdGciLCJpYXQiOjE3NzAyOTM4MzcsImV4cCI6MTc3MDI5Mzg5N30.CEOTFZUs9EP52gYFOT-XLGpNsdqs8jRsUoZSeVvmesQ", sourceUrl: "https://zeno.fm/radio/98dabomb/", desc: "Arkansas’ premier rap and RnB radio station.", genre: "Hip Hop + RnB", moods: ["😎"] },
-            { name: "Vibe 92.7", url: "https://radio.thisisarealdomain.com/WMXR-LP", sourceUrl: "https://vibe927miami.com/", desc: "Classic Hip-Hop lives in Miami.", genre: "Hip Hop + RnB", moods: ["😎", "☀️"] },
-
-            // Jazz + Classical
-            { name: "NTS Sheet Music", url: "https://stream-mixtape-geo.ntslive.net/mixtape35", sourceUrl: "https://www.nts.live/infinite-mixtapes/sheet-music", desc: "The best of classical and contemporary composition.", genre: "Jazz + Classical", moods: ["🧐", "❄️"] },
-            { name: "NTS Expansions", url: "https://stream-mixtape-geo.ntslive.net/mixtape3", sourceUrl: "https://www.nts.live/infinite-mixtapes/expansions", desc: "Jazz and its many mind-expanding variations.", genre: "Jazz + Classical", moods: ["🧐"] },
-            { name: "SomaFM Secret Agent", url: "https://ice.somafm.com/secretagent", sourceUrl: "https://somafm.com/secretagent", desc: "Soundtrack for your stylish, mysterious life.", genre: "Jazz + Classical", moods: ["😎"] },
-            { name: "Radio Swiss Jazz", url: "https://livestreaming-node-3.srg-ssr.ch/srgssr/rsj/mp3/128", sourceUrl: "https://radioswissjazz.ch", desc: "Smooth jazz, soul, and blues standards.", genre: "Jazz + Classical", moods: ["🥹", "☔️"] },
-            { name: "SomaFM Bossa Beyond", url: "https://ice.somafm.com/bossa", sourceUrl: "https://somafm.com/bossa/", desc: "Silky-smooth Brazilian rhythms of Bossa Nova and Samba.", genre: "Jazz + Classical", moods: ["🥹", "☔️"] },
-
-            // Jungle + UKG
-            { name: "UKG Radio", url: "https://streams.radio.co/s9549b306a/listen", sourceUrl: "https://www.ukgradio.co.uk/", desc: "High-quality breakbeats and authentic garage 24/7.", genre: "Jungle + UKG", moods: ["🤪"] },
-            { name: "Subtle Radio", url: "https://subtle.out.airtime.pro:8000/subtle_c", sourceUrl: "https://www.subtleradio.com", desc: "Connecting London's grassroots bass music scene.", genre: "Jungle + UKG", moods: ["🤪"] },
-            { name: "BROKENBEATS.NET", url: "https://brokenbeats.net/stream/aac", sourceUrl: "https://brokenbeats.net/", desc: "Atmospheric drum 'n' bass web radio since 2016.", genre: "Jungle + UKG", moods: ["🧐"] },
-            { name: "DINAMO FLUENT", url: "https://channels.dinamo.fm/fluent-mp3", sourceUrl: "https://dinamo.fm", desc: "Soulful & melodic escapades in drum & bass and liquid funk broadcasting from Istanbul.", genre: "Jungle + UKG", moods: ["🤪"] },
-            { name: "Pure FM", url: "https://phoebe.streamerr.co:1140/;", sourceUrl: "https://www.purefmuk.com/", desc: "Underground House, UK Garage, Jungle, Drum & Bass and everything in between.", genre: "Jungle + UKG", moods: ["🤪"] },
-
-            // Soul + Oldies
-            { name: "NTS Memory Lane", url: "https://stream-mixtape-geo.ntslive.net/mixtape6", sourceUrl: "https://www.nts.live/infinite-mixtapes/memory-lane", desc: "Soul, rare groove, and nostalgic rhythm & blues.", genre: "Soul + Oldies", moods: ["🥹", "☔️"] },
-            { name: "NTS Feelings", url: "https://stream-mixtape-geo.ntslive.net/mixtape27", sourceUrl: "https://www.nts.live/infinite-mixtapes/feelings", desc: "Sweet soul, gospel, and emotive pop.", genre: "Soul + Oldies", moods: ["🥹", "☔️"] },
-            { name: "SomaFM Seven Inch Soul", url: "https://ice.somafm.com/7soul", sourceUrl: "https://somafm.com/7soul", desc: "Vintage soul from original 45 RPM singles.", genre: "Soul + Oldies", moods: ["🥹", "☔️"] },
-            { name: "SomaFM The In-Sound", url: "https://ice.somafm.com/insound", sourceUrl: "https://somafm.com/insound/", desc: "60s/70s Hipster Euro Pop meets groovy vibes.", genre: "Soul + Oldies", moods: ["😎"] },
-            { name: "SomaFM Tiki Time", url: "https://ice.somafm.com/tikitime", sourceUrl: "https://somafm.com/tikitime/", desc: "Vintage island rhythms to sip cocktails by.", genre: "Soul + Oldies", moods: ["😎"] },
-            { name: "Boss Radio 66", url: "https://stream.rcast.net/261426", sourceUrl: "https://www.bossradio66.com/", desc: "All ‘60s all the time, with an obscure twist.", genre: "Soul + Oldies", moods: ["😎"] },
-            { name: "WFMU - Rock n Soul", url: "https://stream0.wfmu.org/rocknsoul.mp3", sourceUrl: "https://wfmu.org/rocknsoul", desc: "Twenty-four hours a day featuring vintage rock'n'roll and soul.", genre: "Soul + Oldies", moods: ["🥹", "☔️"] },
-
-            // Rock + Indie
-            { name: "NTS The Tube", url: "https://stream-mixtape-geo.ntslive.net/mixtape26", sourceUrl: "https://www.nts.live/infinite-mixtapes/the-tube", desc: "Oddball post-punk and minimal wave.", genre: "Rock + Indie", moods: ["🤯"] },
-            { name: "SomaFM Digitalis", url: "https://ice.somafm.com/digitalis", sourceUrl: "https://somafm.com/digitalis", desc: "Digitally affected analog rock to calm the heart.", genre: "Rock + Indie", moods: [] },
-            { name: "SomaFM Folk Forward", url: "https://ice.somafm.com/folkfwd", sourceUrl: "https://somafm.com/folkfwd/", desc: "Indie Folk, Alt-folk and the occasional folk classics.", genre: "Rock + Indie", moods: ["🥹", "☔️"] },
-            { name: "Bagel Radio", url: "https://ais-sa3.cdnstream1.com/2606_128.mp3", sourceUrl: "https://bagelradio.com", desc: "Freshly toasted indie rock hits from then and now.", genre: "Rock + Indie", moods: ["☀️"] },
-            { name: "DKFM CLASSIC", url: "https://radio.streemlion.com:4245/stream", sourceUrl: "https://decayfm.com/", desc: "First wave shoegaze and dream pop classics from Toronto.", genre: "Rock + Indie", moods: ["🥹", "☔️"] },
-            { name: "DKFM EDGE", url: "https://radio.streemlion.com:4405/stream", sourceUrl: "https://decayfm.com/dkfm-edge-2/", desc: "A power rotation of the brightest and best new alt rock sounds the genre has to offer.", genre: "Rock + Indie", moods: ["☀️"] },
-            { name: "The Independent FM", url: "https://listen.radioking.com/radio/293701/stream/340078", sourceUrl: "https://welove.radio/radio/the-independent-fm-1/", desc: "The best Indie music. Past, Present and Future.", genre: "Rock + Indie", moods: ["☀️"] },
-
-            // Eclectic 
-            { name: "NTS Poolside", url: "https://stream-mixtape-geo.ntslive.net/mixtape4", sourceUrl: "https://www.nts.live/infinite-mixtapes/poolside", desc: "Balearic, boogie, and sophisti-pop for beaches.", genre: "Eclectic", moods: ["😎", "☀️"] },
-            { name: "Heady.FM", url: "https://c22.radioboss.fm:18364/stream", sourceUrl: "https://heady.fm", desc: "Transmissions from beyond.", genre: "Eclectic", moods: ["🤯"] },
-            { name: "NTS Otaku", url: "https://stream-mixtape-geo.ntslive.net/mixtape36", sourceUrl: "https://www.nts.live/infinite-mixtapes/otaku", desc: "Video game and anime soundtracks.", genre: "Eclectic", moods: [] },
-            { name: "SomaFM Fluid", url: "https://ice.somafm.com/fluid", sourceUrl: "https://somafm.com/fluid", desc: "Instrumental hiphop, future soul and liquid trap.", genre: "Eclectic", moods: ["😎", "☀️"] },
-            { name: "NTS 1", url: "https://stream-relay-geo.ntslive.net/stream", sourceUrl: "https://www.nts.live", apiId: "1", desc: "Live from London, Manchester, LA and beyond.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "NTS 2", url: "https://stream-relay-geo.ntslive.net/stream2", sourceUrl: "https://www.nts.live", apiId: "2", desc: "Live from London, Manchester, LA and beyond.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "Dublab", url: "https://dublab.out.airtime.pro:8000/dublab_a", sourceUrl: "https://dublab.com", desc: "Forward-thinking \"future roots\" radio blending global soul.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "SomaFM Suburbs of Goa", url: "https://ice.somafm.com/suburbsofgoa", sourceUrl: "https://somafm.com/suburbsofgoa", desc: "Desi sounds and beyond. The future of the Eastern world.", genre: "Eclectic", moods: ["🤯"] },
-            { name: "EHFM", url: "https://ehfm.out.airtime.pro:8000/ehfm_a", sourceUrl: "https://ehfm.live", desc: "Community radio showcasing the sounds of Scotland’s capital.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "20FT Radio", sortName: "Twenty FT Radio", url: "https://20ft-radio.radiocult.fm/stream", sourceUrl: "https://20ftradio.net/", desc: "Ukraine-based platform sharing music from all over the world.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "Radio Buena Vida", url: "https://s4.radio.co/s69b281ac0/listen", sourceUrl: "https://www.buenavida.co.uk", desc: "Glasgow community radio broadcasting everything from experimental to disco.", genre: "Eclectic", moods: ["😎", "☀️"] },
-            { name: "Cashmere Radio", url: "https://cashmereradio.out.airtime.pro:8000/cashmereradio_b", sourceUrl: "https://cashmereradio.com", desc: "Berlin-based not-for-profit community station.", genre: "Eclectic", moods: ["🧐"] },
-            { name: "LYL Radio", url: "https://icecast.lyl.live/live", sourceUrl: "https://lyl.live", desc: "Cultural project promoting sound exploration.", genre: "Eclectic", moods: ["🧐"] },
+            { name: "NTS Slow Focus", url: "https://stream-mixtape-geo.ntslive.net/mixtape", sourceUrl: "https://www.nts.live/infinite-mixtapes/slow-focus", desc: "Meditative and beatless: ambient, drone, and ragas.", genre: "Ambient + Downtempo", moods: ["😴"] },
+            { name: "Dublab", url: "https://dublab.out.airtime.pro:8000/dublab_a", sourceUrl: "https://dublab.com", desc: "Forward-thinking \"future roots\" radio.", genre: "Eclectic", moods: ["☀️"] },
             { name: "Soho Radio", url: "https://sohoradiomusic.doughunt.co.uk:8010/128mp3", sourceUrl: "https://www.sohoradiolondon.com", desc: "Grass-roots amplifier for music and culture.", genre: "Eclectic", moods: ["☀️"] },
-            { name: "WFMU", url: "https://stream0.wfmu.org/freeform-128k.mp3", sourceUrl: "https://wfmu.org", desc: "Freeform radio featuring flat-out uncategorisable strangeness.", genre: "Eclectic", moods: ["🧐", "☔️"] },
-            { name: "WFMU - Give the Drummer Radio", url: "https://stream0.wfmu.org/drummer.mp3", sourceUrl: "https://wfmu.org/drummer", desc: "Freeform web stream curated by WFMU's long-running show.", genre: "Eclectic", moods: ["🧐"] }
+            { name: "NTS 1", url: "https://stream-relay-geo.ntslive.net/stream", sourceUrl: "https://www.nts.live", apiId: "1", desc: "Live from London, Manchester, LA and beyond.", genre: "Eclectic", moods: ["☀️"] },
+            { name: "Cashmere Radio", url: "https://cashmereradio.out.airtime.pro:8000/cashmereradio_b", sourceUrl: "https://cashmereradio.com", desc: "Berlin-based community station.", genre: "Eclectic", moods: ["🧐"] }
         ];
 
-        const SORTED_STATIONS = [...STATIONS].sort((a, b) => {
-            const nameA = a.sortName || a.name;
-            const nameB = b.sortName || b.name;
-            return nameA.localeCompare(nameB, 'en', { numeric: true, sensitivity: 'base' });
-        });
-
-        const shuffleArray = (array) => {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        };
-
         const App = () => {
-            const [currentStation, setCurrentStation] = useState(null);
-            const [displayedName, setDisplayedName] = useState("");
-            const [displayedDesc, setDisplayedDesc] = useState("");
+            const [currentStation, setCurrentStation] = useState(STATIONS[0]);
+            const [hasStarted, setHasStarted] = useState(false);
             const [isPlaying, setIsPlaying] = useState(false);
-            const [isMuted, setIsMuted] = useState(false);
-            const [hasStarted, setHasStarted] = useState(false); 
-            const [isLoading, setIsLoading] = useState(false);
-            const [isIndexOpen, setIsIndexOpen] = useState(false);
-            const [isGenreOpen, setIsGenreOpen] = useState(false);
-            const [isMoodOpen, setIsMoodOpen] = useState(false);
             const [isAboutOpen, setIsAboutOpen] = useState(false);
-            const [selectedGenre, setSelectedGenre] = useState("All");
-            const [selectedMood, setSelectedMood] = useState("All");
-            const [isShuffleMode, setIsShuffleMode] = useState(false);
+            const [isIndexOpen, setIsIndexOpen] = useState(false);
             const [flipState, setFlipState] = useState(null);
-            const [error, setError] = useState(null);
-            
-            const [shuffleSequence, setShuffleSequence] = useState([]);
-            const [shufflePointer, setShufflePointer] = useState(-1);
-
-            const audioContextRef = useRef(null);
-            const audioTagRef = useRef(null);
-            const playTimeoutRef = useRef(null);
-            const metadataIntervalRef = useRef(null);
-            const flipTimeoutRef = useRef(null);
-            const stationRefs = useRef(new Map());
-
-            const colors = { bg: '#fcfcf5', teal: '#7ec2ad', tealDark: '#4a8b78', yellow: '#e5b84a', black: '#000000' };
-
-            const filteredStations = useMemo(() => {
-                return SORTED_STATIONS.filter(s => {
-                    const genreMatch = selectedGenre === "All" || s.genre === selectedGenre;
-                    const moodMatch = selectedMood === "All" || s.moods?.includes(selectedMood);
-                    return genreMatch && moodMatch;
-                });
-            }, [selectedGenre, selectedMood]);
-
-            useEffect(() => {
-                const handleKeyDown = (e) => {
-                    if (e.key === 'Escape') {
-                        setIsGenreOpen(false); setIsMoodOpen(false);
-                        setIsIndexOpen(false); setIsAboutOpen(false);
-                        return;
-                    }
-                    if (isIndexOpen) {
-                        const key = e.key.toLowerCase();
-                        if (key.length === 1 && /[a-z0-9]/.test(key)) {
-                            const target = filteredStations.find(s => 
-                                s.name.toLowerCase().startsWith(key) || 
-                                (s.sortName && s.sortName.toLowerCase().startsWith(key))
-                            );
-                            if (target) {
-                                const el = stationRefs.current.get(target.name);
-                                if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-                            }
-                        }
-                    }
-                    if (!hasStarted) return;
-                    if (e.key === 'ArrowRight') { handleNext(); }
-                    else if (e.key === 'ArrowLeft') { handlePrevious(); }
-                    else if (e.code === 'Space' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsMuted(prev => !prev);
-                        triggerFlip(isShuffleMode ? 'x' : 'y');
-                    }
-                };
-                window.addEventListener('keydown', handleKeyDown);
-                return () => window.removeEventListener('keydown', handleKeyDown);
-            }, [hasStarted, currentStation, isShuffleMode, isPlaying, filteredStations, isIndexOpen, shuffleSequence, shufflePointer]);
-
-            useEffect(() => {
-                if (isShuffleMode) {
-                    const newSequence = shuffleArray(filteredStations);
-                    setShuffleSequence(newSequence);
-                    setShufflePointer(0);
-                    if (newSequence.length > 0 && hasStarted) setCurrentStation(newSequence[0]);
-                }
-            }, [filteredStations, isShuffleMode]);
-
-            useEffect(() => {
-                const startStation = SORTED_STATIONS[Math.floor(Math.random() * SORTED_STATIONS.length)];
-                setCurrentStation(startStation);
-                setDisplayedName(startStation.name);
-            }, []);
-
-            const triggerFlip = (type) => {
-                if (flipTimeoutRef.current) clearTimeout(flipTimeoutRef.current);
-                setFlipState(null);
-                requestAnimationFrame(() => {
-                    setFlipState(type);
-                    flipTimeoutRef.current = setTimeout(() => setFlipState(null), 900);
-                });
-            };
-
-            const fetchMetadata = async (station) => {
-                if (!station) return;
-                if (station.apiId) {
-                    try {
-                        const response = await fetch('https://www.nts.live/api/v2/live', { cache: 'no-store' });
-                        const data = await response.json();
-                        const channelData = data.results.find(res => res.channel_name === station.apiId);
-                        if (channelData && channelData.now) return channelData.now.embed_title || station.desc;
-                    } catch (err) { console.warn("Metadata sync pending."); }
-                }
-                return station.desc || "Continuous Broadcast";
-            };
-
-            useEffect(() => {
-                if (!hasStarted || !currentStation) return;
-                setError(null);
-                setIsLoading(true);
-                if (playTimeoutRef.current) clearTimeout(playTimeoutRef.current);
-                playTimeoutRef.current = setTimeout(() => connectToStream(currentStation.url), 200);
-                if (metadataIntervalRef.current) clearInterval(metadataIntervalRef.current);
-                metadataIntervalRef.current = setInterval(async () => {
-                    const meta = await fetchMetadata(currentStation);
-                    if (!isLoading) setDisplayedDesc(meta);
-                }, 60000);
-                return () => clearInterval(metadataIntervalRef.current);
-            }, [currentStation, hasStarted]);
-
-            const initAudio = () => {
-                if (!audioContextRef.current) {
-                    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioContextRef.current.state === 'suspended') audioContextRef.current.resume();
-                setHasStarted(true);
-                setIsPlaying(true);
-            };
-
-            const connectToStream = (url) => {
-                if (!audioTagRef.current) return;
-                setIsLoading(true);
-                setError(null);
-                audioTagRef.current.pause();
-                audioTagRef.current.src = "";
-                audioTagRef.current.load();
-                audioTagRef.current.src = url;
-                audioTagRef.current.play()
-                    .then(async () => {
-                        setIsLoading(false);
-                        setIsPlaying(true);
-                        setDisplayedName(currentStation.name);
-                        const meta = await fetchMetadata(currentStation);
-                        setDisplayedDesc(meta);
-                    })
-                    .catch(err => {
-                        if (err.name !== 'AbortError') {
-                            setError("Signal Lost");
-                            setIsLoading(false);
-                            setIsPlaying(false);
-                        }
-                    });
-            };
+            const audioRef = useRef(null);
 
             const togglePlay = () => {
-                triggerFlip(isShuffleMode ? 'x' : 'y');
-                if (!hasStarted) { initAudio(); return; }
-                if (isPlaying) { audioTagRef.current.pause(); setIsPlaying(false); }
-                else {
-                    audioTagRef.current.play()
-                        .then(() => setIsPlaying(true))
-                        .catch(() => connectToStream(currentStation.url));
-                }
-            };
-
-            const handleNext = () => {
-                triggerFlip(isShuffleMode ? 'x' : 'y');
-                if (filteredStations.length === 0) return;
-                if (isShuffleMode) {
-                    const nextPointer = (shufflePointer + 1) % shuffleSequence.length;
-                    setShufflePointer(nextPointer);
-                    setCurrentStation(shuffleSequence[nextPointer]);
-                } else {
-                    const currentIndex = filteredStations.findIndex(s => s.url === currentStation.url);
-                    const nextIndex = (currentIndex + 1) % filteredStations.length;
-                    setCurrentStation(filteredStations[nextIndex]);
-                }
-            };
-
-            const handlePrevious = () => {
-                triggerFlip(isShuffleMode ? 'x-reverse' : 'y-reverse');
-                if (filteredStations.length === 0) return;
-                if (isShuffleMode) {
-                    const prevPointer = (shufflePointer - 1 + shuffleSequence.length) % shuffleSequence.length;
-                    setShufflePointer(prevPointer);
-                    setCurrentStation(shuffleSequence[prevPointer]);
-                } else {
-                    const currentIndex = filteredStations.findIndex(s => s.url === currentStation.url);
-                    const prevIndex = (currentIndex - 1 + filteredStations.length) % filteredStations.length;
-                    setCurrentStation(filteredStations[prevIndex]);
-                }
-            };
-
-            const handleShuffleToggle = () => {
-                triggerFlip('x');
-                const targetShuffle = !isShuffleMode;
-                setIsShuffleMode(targetShuffle);
-                if (targetShuffle) {
-                    const sequence = shuffleArray(filteredStations);
-                    setShuffleSequence(sequence);
-                    setShufflePointer(0);
-                    setCurrentStation(sequence[0]);
-                }
-            };
-
-            const handleStationSelect = (station) => {
-                if (!hasStarted) initAudio();
-                setCurrentStation(station);
-                setIsIndexOpen(false);
-            };
-
-            const handleGenreSelect = (genre) => {
-                triggerFlip('y');
-                setSelectedGenre(genre);
-                setIsGenreOpen(false);
-                const pool = STATIONS.filter(s => (genre === "All" || s.genre === genre) && (selectedMood === "All" || s.moods?.includes(selectedMood)));
-                if (pool.length > 0) {
-                    const randomStation = pool[Math.floor(Math.random() * pool.length)];
-                    setCurrentStation(randomStation);
-                    if (!hasStarted) initAudio();
-                }
-            };
-
-            const handleMoodSelect = (moodEmoji) => {
-                triggerFlip('y');
-                setSelectedMood(moodEmoji);
-                setIsMoodOpen(false);
-                const pool = STATIONS.filter(s => (moodEmoji === "All" || s.moods?.includes(moodEmoji)) && (selectedGenre === "All" || s.genre === selectedGenre));
-                if (pool.length > 0) {
-                    const randomStation = pool[Math.floor(Math.random() * pool.length)];
-                    setCurrentStation(randomStation);
-                    if (!hasStarted) initAudio();
-                }
-            };
-
-            const handleMainMoodToggle = () => {
-                if (selectedMood !== "All") {
-                    setSelectedMood("All");
-                    triggerFlip('y');
-                } else {
-                    setIsMoodOpen(true);
-                }
-            };
-
-            const handleMainGenreToggle = () => {
-                if (selectedGenre !== "All") {
-                    setSelectedGenre("All");
-                    triggerFlip('y');
-                } else {
-                    setIsGenreOpen(true);
-                }
-            };
-
-            const getTitleFontSize = (name) => {
-                if (!name) return 'text-6xl sm:text-7xl md:text-8xl';
-                const len = name.length;
-                if (len > 25) return 'text-3xl sm:text-4xl md:text-4xl'; 
-                if (len > 18) return 'text-4xl sm:text-5xl md:text-5xl';
-                if (len > 12) return 'text-5xl sm:text-7xl md:text-6xl';
-                return 'text-5xl sm:text-7xl md:text-8xl';
-            };
-
-            const JotterLogoButton = () => {
-                const animationClass = flipState === 'y' ? 'animate-flip-y' : 
-                                      flipState === 'y-reverse' ? 'animate-flip-y-reverse' :
-                                      flipState === 'x' ? 'animate-flip-x' :
-                                      flipState === 'x-reverse' ? 'animate-flip-x-reverse' : '';
-                return (
-                    <div className="coin-container">
-                        <button
-                            onClick={togglePlay}
-                            className={`relative group transition-all duration-500 active:scale-95 flex-shrink-0 touch-manipulation block bg-transparent outline-none
-                                ${isPlaying && !isMuted ? 'animate-vibrate' : ''} 
-                                ${animationClass}`}
-                            style={{ 
-                                width: '180px', height: '180px',
-                                transformStyle: 'preserve-3d',
-                                transform: isMuted ? 'translateZ(-100px)' : 'translateZ(0px)',
-                                filter: isMuted ? 'grayscale(1) brightness(0.9) contrast(0.9)' : 'none',
-                                transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.8s ease'
-                            }}
-                        >
-                            {[...Array(12)].map((_, i) => (
-                                <div key={i} className="absolute inset-0 rounded-full border border-black/5 shadow-inner" 
-                                     style={{ backgroundColor: colors.teal, transform: `translateZ(${(i - 6) * 1.2}px)`, backfaceVisibility: 'visible' }} />
-                            ))}
-                            <div className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden" 
-                                 style={{ backgroundColor: colors.teal, transform: 'translateZ(7px)', backfaceVisibility: 'hidden' }}>
-                                <div className="absolute inset-[9%] rounded-full shadow-inner" style={{ backgroundColor: colors.yellow }} />
-                                <div className="absolute inset-[22.5%] rounded-full flex items-center justify-center shadow-2xl" style={{ backgroundColor: colors.black }}>
-                                    <div className={`text-[#fcfcf5] transition-opacity duration-300 ${!hasStarted ? 'opacity-80' : 'opacity-0 group-hover:opacity-40'}`}>
-                                        {!hasStarted ? <Icon name="power" size="32" /> : isPlaying ? <Icon name="pause" size="40" fill="currentColor" /> : <Icon name="play" size="40" fill="currentColor" className="translate-x-1" />}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="absolute inset-0 rounded-full" style={{ backgroundColor: colors.yellow, transform: 'translateZ(-7px) rotateY(180deg)', backfaceVisibility: 'hidden' }} />
-                        </button>
-                    </div>
-                );
+                setFlipState('y');
+                setTimeout(() => setFlipState(null), 900);
+                if (!hasStarted) { setHasStarted(true); setIsPlaying(true); }
+                else { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); }
             };
 
             return (
-                <div className="fixed inset-0 flex flex-col items-center select-none transition-colors duration-500 overflow-hidden touch-none" style={{ backgroundColor: colors.bg }}>
-                    <audio ref={audioTagRef} muted={isMuted} />
-                    <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] grayscale bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-
-                    <header className="w-full h-[25vh] flex flex-col items-center justify-center text-center px-4 pt-16 flex-shrink-0 z-10">
-                        {!hasStarted ? (
-                            <h2 className="font-young-serif text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter animate-in fade-in duration-1000 uppercase" style={{ color: colors.black }}>
-                                <span className="block sm:inline">ALGORAD.<span style={{ color: colors.yellow }}>I</span><span style={{ color: colors.teal }}>O</span></span>
-                            </h2>
-                        ) : (
-                            <div className="w-full flex flex-col items-center">
-                                {error ? (
-                                    <div className="flex flex-col items-center justify-center space-y-2 uppercase tracking-widest font-black" style={{ color: colors.black }}>
-                                        <Icon name="alert-circle" size="32" />
-                                        <span className="text-lg md:text-xl uppercase">Signal Lost</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center w-full">
-                                        <h2 className={`font-young-serif tracking-tighter leading-[0.85] sm:leading-tight uppercase transition-all duration-1000 ease-in-out ${getTitleFontSize(displayedName)} ${isLoading ? 'opacity-0 blur-lg' : 'opacity-100'}`} style={{ color: colors.black, textWrap: 'balance' }}>{displayedName}</h2>
-                                        <div className={`mt-2 px-6 transition-all duration-1000 ease-in-out ${isLoading ? 'opacity-0 blur-md' : 'opacity-40'}`}>
-                                            <p className="text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.18em] font-bold max-w-xl leading-relaxed mx-auto" style={{ color: colors.black }}>{displayedDesc}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                <div className="fixed inset-0 flex flex-col items-center justify-between py-16" style={{backgroundColor: '#fcfcf5'}}>
+                    <audio ref={audioRef} src={currentStation.url} autoPlay={hasStarted && isPlaying} />
+                    
+                    <header className="text-center z-10">
+                        <h1 className="font-young-serif text-6xl md:text-8xl uppercase tracking-tighter">
+                            {!hasStarted ? <span>ALGORAD.<span style={{color: '#e5b84a'}}>I</span><span style={{color: '#7ec2ad'}}>O</span></span> : currentStation.name}
+                        </h1>
+                        {hasStarted && <p className="mt-4 text-xs uppercase tracking-widest opacity-40 max-w-xs mx-auto">{currentStation.desc}</p>}
                     </header>
 
-                    <main className="flex-grow flex items-center justify-center w-full space-x-6 sm:space-x-12 md:space-x-20 z-10">
-                        {hasStarted && <button onClick={handlePrevious} className="p-2 outline-none transition-all hover:scale-110 active:scale-90 text-black/40 hover:text-black" aria-label="Previous station"><Icon name="skip-back" size="48" strokeWidth={0} fill="currentColor" /></button>}
-                        <JotterLogoButton />
-                        {hasStarted && <button onClick={handleNext} className="p-2 outline-none transition-all hover:scale-110 active:scale-90 text-black/40 hover:text-black" aria-label="Next station"><Icon name="skip-forward" size="48" strokeWidth={0} fill="currentColor" /></button>}
-                    </main>
-
-                    <footer className="w-full h-[25vh] flex flex-col items-center justify-center pb-8 flex-shrink-0 z-10">
-                        {!hasStarted ? (
-                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] font-black animate-in fade-in duration-1000" style={{ color: colors.teal }}>created by <a href="https://www.jotter.media" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors outline-none">jotter.media</a></p>
-                        ) : (
-                            <div className="flex items-center justify-center gap-4 sm:gap-8">
-                                <FooterBtn icon={isMuted ? "volume-x" : "volume-2"} label="Mute" onClick={() => { setIsMuted(!isMuted); triggerFlip('y'); }} active={isMuted} />
-                                <FooterBtn icon="shuffle" label="Shuffle" onClick={handleShuffleToggle} active={isShuffleMode} />
-                                <FooterBtn label="Vibe" onClick={handleMainMoodToggle} active={selectedMood !== "All"} text={selectedMood !== "All" ? selectedMood : ""} icon={selectedMood !== "All" ? "" : "smile"} />
-                                <FooterBtn 
-                                    label="Genre" 
-                                    onClick={handleMainGenreToggle} 
-                                    active={selectedGenre !== "All"} 
-                                    text={selectedGenre !== "All" ? GENRE_EMOJIS[selectedGenre] : ""}
-                                    icon={selectedGenre !== "All" ? "" : "music"} 
-                                />
-                                <FooterBtn icon="list" label="Index" onClick={() => setIsIndexOpen(true)} />
-                                <FooterBtn icon="info" label="About" onClick={() => setIsAboutOpen(true)} />
+                    <div className="coin-container z-10">
+                        <button onClick={togglePlay} className={`w-44 h-44 rounded-full flex items-center justify-center transition-transform ${isPlaying ? 'animate-vibrate' : ''} ${flipState ? 'animate-flip-y' : ''}`} style={{backgroundColor: '#7ec2ad', border: '8px solid rgba(0,0,0,0.05)'}}>
+                            <div className="w-32 h-32 rounded-full flex items-center justify-center" style={{backgroundColor: '#000'}}>
+                                <Icon name={!hasStarted ? "power" : isPlaying ? "pause" : "play"} size="40" fill="#fcfcf5" />
                             </div>
-                        )}
+                        </button>
+                    </div>
+
+                    <footer className="flex gap-8 z-10">
+                        <button onClick={() => setIsIndexOpen(true)} className="uppercase font-black text-[10px] tracking-[0.2em] opacity-40 hover:opacity-100">Index</button>
+                        <button onClick={() => setIsAboutOpen(true)} className="uppercase font-black text-[10px] tracking-[0.2em] opacity-40 hover:opacity-100">About</button>
                     </footer>
 
-                    {isMoodOpen && <MoodOverlay onSelect={handleMoodSelect} onClose={() => setIsMoodOpen(false)} selected={selectedMood} />}
-                    {isGenreOpen && <GenreOverlay onSelect={handleGenreSelect} onClose={() => setIsGenreOpen(false)} selected={selectedGenre} colors={colors} />}
-                    {isIndexOpen && <IndexOverlay current={currentStation} onSelect={handleStationSelect} onClose={() => setIsIndexOpen(false)} stations={filteredStations} refs={stationRefs} />}
-                    {isAboutOpen && <AboutOverlay onClose={() => setIsAboutOpen(false)} colors={colors} />}
-                </div>
-            );
-        };
-
-        const FooterBtn = ({ icon, label, onClick, active, text }) => (
-            <div className="flex flex-col items-center group">
-                <button onClick={onClick} className={`w-14 h-14 rounded-3xl border border-black/10 flex items-center justify-center transition-all hover:scale-110 active:scale-90 text-xl outline-none`} 
-                    style={{ backgroundColor: active ? '#000' : 'transparent', color: active ? '#fcfcf5' : '#000' }}>
-                    {text ? <span className="leading-none text-2xl">{text}</span> : (icon ? <Icon name={icon} size="22" strokeWidth={2} fill="none" /> : null)}
-                </button>
-                <span className="text-[9px] font-black tracking-widest mt-2 opacity-0 group-hover:opacity-100 transition-opacity uppercase text-center">{label}</span>
-            </div>
-        );
-
-        const MoodOverlay = ({ onSelect, onClose, selected }) => (
-            <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl bg-white/80">
-                <button onClick={onClose} className="absolute top-6 right-6 p-2 transition-transform hover:rotate-90 text-black outline-none"><Icon name="x" size="32" /></button>
-                <div className="flex-grow overflow-y-auto px-6 pt-16 pb-12 custom-scrollbar">
-                    <div className="max-w-xl mx-auto flex flex-col items-center">
-                        <h4 className="font-young-serif text-3xl sm:text-4xl font-black tracking-tight mb-8 text-center uppercase text-black">Vibe check</h4>
-                        <div className="grid grid-cols-3 gap-4 sm:gap-6 max-w-sm w-full">
-                            {MOODS.map((mood, idx) => (
-                                <button key={mood.emoji} onClick={() => onSelect(mood.emoji)} className={`aspect-square flex items-center justify-center text-3xl sm:text-4xl rounded-[1.5rem] border transition-all hover:scale-110 active:scale-95 animate-brand-kinetic outline-none ${selected === mood.emoji ? 'border-black bg-black' : 'border-black/5 bg-white shadow-sm'}`} style={{ animationDelay: `${idx * 40}ms` }}>{mood.emoji}</button>
-                            ))}
+                    {isAboutOpen && <div className="fixed inset-0 bg-white/95 z-50 p-8 overflow-y-auto animate-overlay-in custom-scrollbar">
+                        <div className="max-w-2xl mx-auto py-12 space-y-8">
+                            <button onClick={() => setIsAboutOpen(false)} className="fixed top-8 right-8"><Icon name="x" size="32" /></button>
+                            <h2 className="font-young-serif text-4xl uppercase">The Manifesto</h2>
+                            <p>Today’s algorithms are designed for addiction and content loops, leaving indie creators behind. ALGORAD.IO is an attempt to use technology for something better: highlighting human curation[cite: 121, 126].</p>
+                            <h3 className="font-young-serif text-2xl uppercase pt-4">The Selector</h3>
+                            <p>My journey began in student radio, leading to scouting talent for Radio X, curating for Dazed Digital, and leading the editorial team at Boiler Room[cite: 118]. I was an original DJ at NTS Radio, hosting the Synth Hero Show from launch[cite: 119].</p>
+                            <p className="font-bold pt-4">– Tim Noakes [cite: 123]</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-        );
+                    </div>}
 
-        const GenreOverlay = ({ onSelect, onClose, selected }) => (
-            <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl bg-white/80 text-black">
-                <button onClick={onClose} className="absolute top-6 right-6 p-2 transition-transform hover:rotate-90 outline-none"><Icon name="x" size="32" /></button>
-                <div className="flex-grow overflow-y-auto px-4 pt-16 pb-8 custom-scrollbar">
-                    <div className="max-w-2xl mx-auto flex flex-col items-center">
-                        <h4 className="font-young-serif text-3xl sm:text-4xl font-black tracking-tight mb-6 text-center uppercase">Genre</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                            {GENRES.map((genre, idx) => (
-                                <button key={genre} onClick={() => onSelect(genre)} 
-                                    className="flex items-center justify-between px-5 py-2.5 rounded-[1.2rem] border transition-all hover:scale-[1.03] animate-brand-kinetic shadow-sm outline-none" 
-                                    style={{ 
-                                        borderColor: selected === genre ? '#000' : 'rgba(0,0,0,0.05)', 
-                                        backgroundColor: selected === genre ? '#000' : 'white', 
-                                        color: selected === genre ? '#fcfcf5' : '#4a8b78', 
-                                        animationDelay: `${idx * 40}ms` 
-                                    }}>
-                                    <span className="font-young-serif text-base sm:text-lg font-black uppercase tracking-tight truncate mr-2">{genre}</span>
-                                    {selected === genre && <Icon name="check" size="20" strokeWidth={3} />}
+                    {isIndexOpen && <div className="fixed inset-0 bg-white/95 z-50 p-8 overflow-y-auto animate-overlay-in custom-scrollbar">
+                        <div className="max-w-xl mx-auto py-12">
+                            <button onClick={() => setIsIndexOpen(false)} className="fixed top-8 right-8"><Icon name="x" size="32" /></button>
+                            <h2 className="font-young-serif text-3xl uppercase mb-8 text-center">Station Index</h2>
+                            {STATIONS.map(s => (
+                                <button key={s.name} onClick={() => { setCurrentStation(s); setIsIndexOpen(false); if(!hasStarted) togglePlay(); }} className="w-full text-left py-4 border-b border-black/5 hover:bg-black/5 px-4 flex justify-between items-center group">
+                                    <span className="font-young-serif text-xl uppercase group-hover:text-[#7ec2ad]">{s.name}</span>
+                                    <Icon name="play" size="16" className="opacity-0 group-hover:opacity-100" />
                                 </button>
                             ))}
                         </div>
-                    </div>
-                </div>
-            </div>
-        );
-
-        const IndexOverlay = ({ current, onSelect, onClose, stations, refs }) => {
-            useEffect(() => {
-                if (current) {
-                    const activeElement = refs.current.get(current.name);
-                    if (activeElement) {
-                        activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-            }, [current]);
-
-            return (
-                <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-3xl bg-white/90 text-black">
-                    <button onClick={onClose} className="absolute top-6 right-6 p-2 transition-transform hover:rotate-90 z-[110] outline-none bg-white/50 backdrop-blur rounded-full shadow-sm"><Icon name="x" size="32" /></button>
-                    <div className="flex-grow overflow-y-auto p-4 custom-scrollbar scroll-smooth pt-20">
-                        <div className="max-w-3xl mx-auto flex flex-col">
-                            <h3 className="font-young-serif text-xl sm:text-3xl font-black mb-8 px-6 uppercase text-center">Station index</h3>
-                            {stations.map((station) => (
-                                <div key={station.name} ref={el => { if (el) refs.current.set(station.name, el); }} className="w-full transition-all border-b border-black/[0.03] last:border-0 flex items-stretch hover:bg-black/[0.02]" style={{ backgroundColor: current?.name === station.name ? 'rgba(0,0,0,0.05)' : 'transparent' }}>
-                                    <button onClick={() => onSelect(station)} className="flex-grow text-left py-5 px-6 outline-none group flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className={`font-young-serif text-xl sm:text-2xl font-black tracking-tighter ${current?.name === station.name ? 'text-black' : 'text-[#7ec2ad]'} uppercase`}>{station.name}</span>
-                                            <span className="text-[9px] uppercase tracking-widest font-black opacity-40 mt-0.5">{station.desc.split('.')[0]}</span>
-                                        </div>
-                                        {current?.name === station.name && <div className="w-3.5 h-3.5 rounded-full animate-pulse bg-[#e5b84a]" />}
-                                    </button>
-                                    <a href={station.sourceUrl} target="_blank" rel="noopener noreferrer" className="px-8 flex items-center justify-center opacity-20 hover:opacity-100 transition-opacity outline-none"><Icon name="external-link" size="18" /></a>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    </div>}
                 </div>
             );
         };
-
-        const AboutOverlay = ({ onClose, colors }) => {
-            const inspirationLinks = [
-                { name: "Cities and Memory", desc: "Stuart Fowkes's global sound map presents both the reality of a location and its imagined alternative. Each entry features a faithful field recording and a reimagined remix, creating a collaborative archive that explores the relationship between sound, geography, and human memory.", url: "https://citiesandmemory.com/" },
-                { name: "Drive & Listen", desc: "Erkam Şeker's project allows you to virtually cruise through global cities via a dashboard camera paired with local radio. By combining high-definition street footage with live broadcasts, it captures the mundane beauty of everyday life and the unique atmosphere of being a passenger in a foreign land.", url: "https://drivenlisten.com/" },
-                { name: "Five Radio Stations", desc: "Seb Emina and Silvia Guerra present a group show comprising five artworks that also function as live radio stations. Although they are automated, the stations are not on-demand but streamed as live, meaning each listener hears the same thing at the same time as an invisible community of other people.", url: "https://www.fiveradiostations.com/" },
-                { name: "FMSTREAM", desc: "Gunther Zeilinger's fast, independent database project provides direct access to real stream sources for thousands of global stations. By focusing on bitrates, sample rates, and signal integrity rather than app-based wrappers, it serves as one of the world's most comprehensive tools for technical broadcast enthusiasts and high-fidelity listeners.", url: "https://fmstream.org/" },
-                { name: "Lofi.cafe", desc: "Fabrizio Rinaldi and Maria Di Vincenzo's Lofi.cafe minimalist tool gathers the best lofi music streams into a single, distraction-free interface. Designed for focus, the project uses simple keyboard shortcuts to flip through curated channels paired with retro GIF backdrops to create a cosy digital sanctuary for work.", url: "https://lofi.cafe/" },
-                { name: "MTV Rewind", desc: "Flexasaurus Rex recreates MTV’s golden era with over 88,000 music videos across 56 channels. Built with zero ads, the project focuses on cultural preservation and the shared experience of broadcast television, featuring original commercials and Easter eggs to restore the format of human-curated media.", url: "https://wantmymtv.vercel.app/" },
-                { name: "Poolsuite FM", desc: "Marty Bell's virtual holiday portal is like living in a sun-drenched, 1980s summer. Using a retro Macintosh-inspired interface, it streams upbeat disco and electronic tracks alongside grainy VHS footage to transport listeners to a permanent state of leisure.", url: "https://poolsuite.net/" },
-                { name: "Project Random", desc: "Putting the web on shuffle by randomising the algorithms behind social media and streaming platforms, it unearths obscure content you might otherwise never see. It gives forgotten, unseen media from the depths of the internet a chance to be rediscovered by someone, somewhere in the world.", url: "https://0xbeef.co.uk/random/radio" },
-                { name: "Radio Garden", desc: "Jonathan Puckey's project invites you to explore live radio from across the globe via a cartographic window into the world's airwaves. By bringing distant voices close, it connects people across borders, allowing listeners to discover new cultures or re-connect with home from thousands of miles away.", url: "https://radio.garden/" },
-                { name: "Radiooooo", desc: "Benjamin Moreau and Noemi Ferst's iconic musical time machine allows users to select a country and a decade to hear what was playing there at that time. This collaborative project draws from a global library of music to open horizons through culture and beauty, encouraging users to discover timeless treasures from the collective memory of humanity.", url: "https://app.radiooooo.com/" },
-                { name: "RADIORADIORADIO", desc: "Peter Maxwell's project creates a beautiful, static filled exploratory mode for travelling between a vast array of today's independent internet radio stations. It is designed for serendipitous and intentional listening. It’s a joy to zone out to.", url: "https://radioradiorad.io/" },
-                { name: "Sounds of the Forest", desc: "Wild Rumpus's growing soundmap bringing together the aural tones and textures of woodlands from all around the world. Supported by Arts Council England, it collects these unique environmental recordings to create a permanent, immersive record of nature's diverse and fragile ecosystems.", url: "https://timberfestival.org.uk/soundsoftheforest-soundmap/" },
-                { name: "Wild Memory Radio", desc: "Seb Emina has created a gallery that stores memories tied to specific locations rather than physical objects. It explores the \"sense of place\" by pairing human narratives with AI-generated approximations of the locations and memories described.", url: "https://wild-memory-radio.wetransfer.com/" }
-            ];
-
-            return (
-                <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl bg-white/80 text-black">
-                    <button onClick={onClose} className="absolute top-6 right-6 p-2 transition-transform hover:rotate-90 outline-none"><Icon name="x" size="32" /></button>
-                    <div className="flex-grow overflow-y-auto p-6 sm:p-20 custom-scrollbar pt-20">
-                        <div className="max-w-2xl mx-auto space-y-16 pb-24 text-sm sm:text-base leading-relaxed tracking-tight text-black">
-                            <section className="space-y-6">
-                                <h4 className="font-young-serif text-3xl sm:text-4xl font-black tracking-tight leading-tight uppercase">ALGORAD.<span style={{ color: colors.yellow }}>I</span><span style={{ color: colors.teal }}>O</span></h4>
-                                <p>Today’s musical algorithms are designed to keep us addicted to subscriptions and to push major label artist drops, trapping us in soul-numbing content loops while the indie artists and communities who actually create music culture are left behind.</p>
-                                <p>ALGORAD.IO is an attempt to use advanced technology for something better.</p>
-                                <p>The internet is built on algorithms, but they aren't all dystopian by design. Some algorithms can be used for utopian purposes – like the ones that host independent radio streams, or the co-coding tools that allow a non-coder like me to build a platform to celebrate my favourite music communities.</p>
-                                <p>Designed to live amongst your browser tabs, ALGORAD.IO lets you filter my favourite internet radio stations by mood, genre, or weather. Choose whatever fits your current vibe.</p>
-                                <p>In the age of <a href="https://algotopia.xyz" target="_blank" rel="noopener noreferrer" className="hover:underline">Algotopia</a>, this is my way of using technology to highlight human curation and return to the foundations of the internet: community and creativity.</p>
-                            </section>
-
-                            <section className="space-y-6 pt-12 border-t border-black/5">
-                                <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: colors.teal }}>Who’s The Selector?</h4>
-                                <p>My name’s Tim and I’m an algoholic.</p>
-                                <p>I’ve also spent a lifetime being obsessed with the radio, as both a listener and host.</p>
-                                <p>My broadcasting journey began producing student radio at London Guildhall University in the late 90s. This foundation led to a career scouting new talent for John Kennedy’s X-Posure show on Radio X, curating new music playlists for Dazed Digital, leading an editorial team at Boiler Room, and being a repeat guest on BBC Radio 1’s Review Show. I was also one of the original DJs at NTS Radio, hosting the <a href="https://www.timnoakes.com/ntslive" target="_blank" rel="noopener noreferrer" className="hover:underline">Synth Hero Show</a> from the station's launch in 2011 through to 2019.</p>
-                                <p>ALGORAD.IO is my latest audio adventure – a human curated sidequest co-coded with AI to discover and listen to my favourite indie stations in a new way. I’ve really enjoyed making it, so I thought I’d share it with other like-minded music fans. There’s links to all of the stations in the index, so click through and support them.</p>
-                                <p className="font-black pt-4">– <a href="https://www.timnoakes.com/" target="_blank" rel="noopener noreferrer" className="hover:underline">Tim Noakes</a></p>
-                            </section>
-
-                            <section className="space-y-8 pt-12 border-t border-black/5">
-                                <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: colors.yellow }}>Boost Your Signal</h4>
-                                <p>The following indie radio projects have all helped inspire ALGORAD.IO. Please explore them in depth and support their creators.</p>
-                                <div className="grid gap-8">
-                                    {inspirationLinks.map((link) => (
-                                        <a 
-                                            key={link.name} 
-                                            href={link.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="group block space-y-2 border-b border-black/[0.03] pb-6 hover:bg-black/[0.01] transition-all outline-none"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-young-serif text-xl font-black tracking-tight uppercase group-hover:underline text-black">
-                                                    {link.name}
-                                                </span>
-                                                <Icon name="external-link" size="18" className="opacity-20 group-hover:opacity-40 transition-opacity" />
-                                            </div>
-                                            <span className="opacity-60 leading-relaxed block">
-                                                {link.desc}
-                                            </span>
-                                        </a>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <section className="space-y-6 pt-12 border-t border-black/5 text-[10px] sm:text-xs uppercase tracking-widest leading-relaxed opacity-40 font-black">
-                                <h5 className="font-young-serif text-xl font-black uppercase tracking-tight text-black">Disclaimer</h5>
-                                <p>ALGORAD.IO is strictly a non-commercial project dedicated to the appreciation of internet radio. We do not host, store, or modify any audio content.</p>
-                                <p>All intellectual property, copyright, and licensing for the broadcasts belong exclusively to the original stations. If you are a rights holder and would prefer your stream not to be included, please contact us for immediate removal.</p>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
-
