@@ -1420,11 +1420,11 @@
         };
 
 
-        const CollapsibleSection = ({ title, titleColor, children, colors, defaultOpen = false }) => {
-            const [isOpen, setIsOpen] = useState(defaultOpen);
+        const CollapsibleSection = ({ id, title, titleColor, children, colors, openSection, setOpenSection }) => {
+            const isOpen = openSection === id;
             return (
                 <section className="border-t pt-6" style={{ borderColor: colors.border }}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between text-left outline-none group">
+                    <button onClick={() => setOpenSection(isOpen ? null : id)} className="w-full flex items-center justify-between text-left outline-none group">
                         <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: titleColor || colors.text }}>{title}</h4>
                         <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} size="24" className="opacity-40 group-hover:opacity-70 transition-opacity flex-shrink-0 ml-4" />
                     </button>
@@ -1438,7 +1438,7 @@
         };
 
 
-        const AboutOverlay = ({ onClose, colors }) => (
+        const AboutOverlay = ({ onClose, colors }) => { const [openSection, setOpenSection] = useState(null); return (
             <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl" style={{ backgroundColor: colors.overlayBg, color: colors.text }}>
                 <CloseButton onClick={onClose} colors={colors} />
                 <div className="flex-grow overflow-y-auto p-6 sm:p-20 custom-scrollbar pt-20">
@@ -1451,7 +1451,7 @@
                         </div>
 
                         {/* About */}
-                        <CollapsibleSection title="About" titleColor={colors.text} colors={colors}>
+                        <CollapsibleSection id="about" title="About" titleColor={colors.text} colors={colors} openSection={openSection} setOpenSection={setOpenSection}>
                             <p className="font-bold">RELAY RAD.IO is about the magic of hearing something you didn't know you needed, exactly when you needed to hear it.</p>
                             <p>Radio relay towers were once the backbone of global communication.</p>
                             <p>High-frequency signals travel in straight lines, so they'd eventually hit the horizon or get blocked by mountains. Relay stations were the solution: built on high ground to catch a fading signal, amplify it, and beam it forward to the next point.</p>
@@ -1469,7 +1469,7 @@
                         </CollapsibleSection>
 
                         {/* How Do You Use It? */}
-                        <CollapsibleSection title="How Do You Use It?" titleColor={colors.teal} colors={colors}>
+                        <CollapsibleSection id="howto" title="How Do You Use It?" titleColor={colors.teal} colors={colors} openSection={openSection} setOpenSection={setOpenSection}>
                             <div className="space-y-5">
                                 <div>
                                     <p className="font-bold mb-1">Getting Started</p>
@@ -1537,14 +1537,14 @@
                         </CollapsibleSection>
 
                         {/* Who Made It? */}
-                        <CollapsibleSection title="Who Made It?" titleColor={colors.yellow} colors={colors}>
+                        <CollapsibleSection id="who" title="Who Made It?" titleColor={colors.yellow} colors={colors} openSection={openSection} setOpenSection={setOpenSection}>
                             <p>Hi, I'm <a href="https://www.timnoakes.com/" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Tim</a>. I've spent a lifetime obsessed with the radio as a listener, host, and curator. From producing student radio to scouting talent for <span className="font-bold">Radio X</span>, leading editorial at <span className="font-bold">Boiler Room</span>, and launching <span className="font-bold">Dazed</span>'s playlists in the noughties, to being a founding DJ at <span className="font-bold">NTS Radio</span> (hosting the <a href="https://www.timnoakes.com/ntslive" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Synth Hero Show</a> from 2011 to 2019), my career has been defined by finding incredible music and passing it on to others.</p>
                             <p>RELAY RAD.IO is my latest audio adventure: a sidequest designed to help you bypass the streaming algorithm and discover your new favourite frequency.</p>
                             <p>If you'd like to discuss the project, have a station recommendation, or need help building your own platform, I'd love to hear from you: <a href="mailto:tim@jotter.media" className="hover:underline font-bold" style={{ color: colors.text }}>tim@jotter.media</a></p>
                         </CollapsibleSection>
 
                         {/* Signal Boosters */}
-                        <CollapsibleSection title="Experimental Radio Resources" titleColor={colors.teal} colors={colors}>
+                        <CollapsibleSection id="resources" title="Experimental Radio Resources" titleColor={colors.teal} colors={colors} openSection={openSection} setOpenSection={setOpenSection}>
                             <p>The following curators and coders are at the forefront of rethinking the modern radio experience. Each values curation and innovation over content and noise. They have all inspired me immensely. Please explore and support their projects.</p>
                             <div className="grid gap-6 mt-4">
                                 {INSPIRATION_LINKS.map((link) => (
@@ -1562,7 +1562,7 @@
                         </CollapsibleSection>
 
                         {/* Disclaimer */}
-                        <CollapsibleSection title="Disclaimer" titleColor={colors.text} colors={colors}>
+                        <CollapsibleSection id="disclaimer" title="Disclaimer" titleColor={colors.text} colors={colors} openSection={openSection} setOpenSection={setOpenSection}>
                             <div className="text-[10px] sm:text-xs uppercase tracking-widest leading-relaxed opacity-50 font-bold space-y-4">
                                 <p>RELAY RAD.IO is a non-commercial, open-source project. We do not host, store, reproduce, or modify any audio content. All streams are delivered directly from their respective station servers, we simply provide a relay link to publicly available streams.</p>
                                 <p>All station names, logos, and branding remain the property of their respective owners. If you are a station owner and would like your station added or removed, please <a href="mailto:tim@jotter.media" className="hover:underline" style={{ color: colors.text }}>get in touch</a>.</p>
@@ -1574,7 +1574,7 @@
                     </div>
                 </div>
             </div>
-        );
+        ); };
 
 
         const App = () => {
