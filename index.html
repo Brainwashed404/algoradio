@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RELAY RAD.IO | Internet Radio</title>
+    <title>RELAY RAD.IO | FIND YOUR SIGNAL. ESCAPE THE ALGORITHM.</title>
     <link rel="apple-touch-icon" href="icons/icon-180x180.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
     <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
@@ -269,8 +269,8 @@
 
 
         const INSPIRATION_LINKS = [
-            { name: "Cities and Memory", desc: "Stuart Fowkes\u2019s global sound map presents both the reality of a location and its imagined alternative. Each entry features a faithful field recording and a reimagined remix, creating a collaborative archive that explores the relationship between sound, geography, and human memory.", url: "https://citiesandmemory.com/" },
-            { name: "Drive & Listen", desc: "Erkam \u015Eeker\u2019s project allows you to virtually cruise through global cities via a dashboard camera paired with local radio. By combining high-definition street footage with live broadcasts, it captures the mundane beauty of everyday life and the unique atmosphere of being a passenger in a foreign land.", url: "https://driveandlisten.herokuapp.com/" },
+            { name: "Cities and Memory", desc: "Stuart Fowkes\u2019s global sound map presents both the reality of a location and its imagined alternative. Each entry features a faithful field recording and a reimagined remix, creating a collaborative archive that explores the relationship between sound, geography, and human memory.", url: "https://citiesandmemory.com/sound-map/" },
+            { name: "Drive & Listen", desc: "Erkam \u015Eeker\u2019s project allows you to virtually cruise through global cities via a dashboard camera paired with local radio. By combining high-definition street footage with live broadcasts, it captures the mundane beauty of everyday life and the unique atmosphere of being a passenger in a foreign land.", url: "https://drivenlisten.com/" },
             { name: "Five Radio Stations", desc: "Seb Emina and Silvia Guerra present a group show comprising five artworks that also function as live radio stations. Although they are automated, the stations are not on-demand but streamed as live, meaning each listener hears the same thing at the same time as an invisible community of other people.", url: "https://www.fiveradiostations.com/" },
             { name: "FMSTREAM", desc: "Gunther Zeilinger\u2019s fast, independent database project provides direct access to real stream sources for thousands of global stations. By focusing on bitrates, sample rates, and signal integrity rather than app-based wrappers, it serves as one of the world\u2019s most comprehensive tools for technical broadcast enthusiasts and high-fidelity listeners.", url: "https://fmstream.org/" },
             { name: "Lofi.cafe", desc: "Fabrizio Rinaldi and Maria Di Vincenzo\u2019s Lofi.cafe minimalist tool gathers the best lofi music streams into a single, distraction-free interface. Designed for focus, the project uses simple keyboard shortcuts to flip through curated channels paired with retro GIF backdrops to create a cosy digital sanctuary for work.", url: "https://lofi.cafe/" },
@@ -1420,56 +1420,157 @@
         };
 
 
+        const CollapsibleSection = ({ title, titleColor, children, colors, defaultOpen = false }) => {
+            const [isOpen, setIsOpen] = useState(defaultOpen);
+            return (
+                <section className="border-t pt-6" style={{ borderColor: colors.border }}>
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between text-left outline-none group">
+                        <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: titleColor || colors.text }}>{title}</h4>
+                        <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} size="24" className="opacity-40 group-hover:opacity-70 transition-opacity flex-shrink-0 ml-4" />
+                    </button>
+                    <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100 mt-6' : 'max-h-0 opacity-0 mt-0'}`}>
+                        <div className="space-y-5">
+                            {children}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+
         const AboutOverlay = ({ onClose, colors }) => (
             <div className="fixed inset-0 z-[100] flex flex-col animate-overlay-in backdrop-blur-2xl" style={{ backgroundColor: colors.overlayBg, color: colors.text }}>
                 <CloseButton onClick={onClose} colors={colors} />
                 <div className="flex-grow overflow-y-auto p-6 sm:p-20 custom-scrollbar pt-20">
-                    <div className="max-w-2xl mx-auto space-y-16 pb-24 text-sm sm:text-base leading-relaxed tracking-tight" style={{ color: colors.text }}>
-                        <section className="space-y-6">
+                    <div className="max-w-2xl mx-auto space-y-8 pb-24 text-sm sm:text-base leading-relaxed tracking-tight" style={{ color: colors.text }}>
+
+                        {/* Header */}
+                        <div className="space-y-3 pb-4">
                             <h4 className="font-young-serif text-3xl sm:text-4xl font-black tracking-tight leading-tight uppercase" style={{ color: colors.text }}>RELAY RAD.<span style={{ color: colors.yellow }}>I</span><span style={{ color: colors.teal }}>O</span></h4>
-                            <p>Today’s musical algorithms are designed to keep us addicted to subscriptions and to push major label artist drops, trapping us in soul-numbing content loops while the indie artists and communities who actually create music culture are left behind.</p>
-                            <p>RELAY RAD.IO is an attempt to use advanced technology for something better.</p>
-                            <p>The internet is built on algorithms, but they aren’t all dystopian by design. Some algorithms can be used for utopian purposes – like the ones that host independent radio streams, or the co-coding tools that allow a non-coder like me to build a platform to celebrate my favourite music communities.</p>
-                            <p>Designed to live amongst your browser tabs, RELAY RAD.IO lets you filter my favourite internet radio stations by mood, genre, or weather. Choose whatever fits your current vibe.</p>
-                            <p>In the age of <a href="https://algotopia.xyz" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Algotopia</a>, this is my way of using technology to highlight human curation and return to the foundations of the internet: community and creativity.</p>
-                        </section>
+                            <p className="text-xs sm:text-sm uppercase tracking-[0.2em] font-bold opacity-50">Find your signal. Escape the algorithm.</p>
+                        </div>
 
+                        {/* About */}
+                        <CollapsibleSection title="About" titleColor={colors.text} colors={colors} defaultOpen={true}>
+                            <p className="font-bold">RELAY RAD.IO is about the magic of hearing something you didn't know you needed, exactly when you needed to hear it.</p>
+                            <p>Radio relay towers were once the backbone of global communication.</p>
+                            <p>High-frequency signals travel in straight lines, so they'd eventually hit the horizon or get blocked by mountains. Relay stations were the solution: built on high ground to catch a fading signal, amplify it, and beam it forward to the next point.</p>
+                            <p>In other words, technology boosting others and overcoming obstacles, not creating them.</p>
+                            <p>Somewhere along the way, that logic got reversed.</p>
+                            <p>Modern music discovery platforms promise infinite archives with hyper-personalisation. But more often than not it creates its own barriers: choice paralysis, recommended for you ruts, and economic dependence on providers with questionable motives. The algorithm isn't helping you find music. It's keeping you scrolling through <a href="https://algotopia.xyz" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Algotopia</a>.</p>
+                            <p className="font-bold">RELAY RAD.IO returns to the original principles of the internet and pirate radio.</p>
+                            <p>We use technology to support diverse musical communities and champion human creativity.</p>
+                            <p>We see constraint is a feature, not a flaw.</p>
+                            <p>Instead of serving up everything, we relay a curated selection of our favourite global internet radio stations for you to listen to.</p>
+                            <p>Zero in on a feeling, genre, or your environment. Let serendipity do its thing.</p>
+                            <p>These aren't just streams. They're amplifications of real subcultures and tastemakers sharing their records from around the world.</p>
+                            <p>If a station moves you, click through to their site on our Index page. Become a paid supporter. Buy albums on Bandcamp. Help sustain the DIY communities that keep these vital signals alive.</p>
+                            <p className="font-bold">Enjoy the journey.</p>
+                        </CollapsibleSection>
 
-                        <section className="space-y-6 pt-12 border-t" style={{ borderColor: colors.border }}>
-                            <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: colors.teal }}>Who's The Selector?</h4>
-                            <p>My name’s <a href="https://www.timnoakes.com/" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Tim</a> and I’m an algoholic.</p>
-                            <p>I’ve also spent a lifetime being obsessed with the radio, as both a listener and host.</p>
-                            <p>My broadcasting journey began producing student radio at London Guildhall University in the late 90s. This foundation led to a career scouting new talent for John Kennedy’s X-Posure show on Radio X, curating new music playlists for Dazed Digital, leading an editorial team at Boiler Room, and being a repeat guest on BBC Radio 1’s Review Show. I was also one of the original DJs at NTS Radio, hosting the <a href="https://www.timnoakes.com/ntslive" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Synth Hero Show</a> from the station’s launch in 2011 through to 2019.</p>
-                            <p>RELAY RAD.IO is my latest audio adventure – a human curated sidequest co-coded with AI to discover and listen to my favourite indie stations in a new way. I’ve really enjoyed making it, so I thought I’d share it with other like-minded music fans. There’s links to all of the stations in the index, so click through and support them.</p>
-                            <p className="font-black pt-4">– <a href="https://www.timnoakes.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: colors.text }}>Tim Noakes</a></p>
-                        </section>
+                        {/* How Do You Use It? */}
+                        <CollapsibleSection title="How Do You Use It?" titleColor={colors.teal} colors={colors}>
+                            <div className="space-y-5">
+                                <div>
+                                    <p className="font-bold mb-1">Getting Started</p>
+                                    <p>Tap the coin to start playing. You'll land somewhere fun.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Changing Stations</p>
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        <li>Swipe the coin left/right or up/down to skip stations</li>
+                                        <li>Press the arrow buttons either side of the coin</li>
+                                        <li>Press a letter key (desktop) to jump to the nearest station starting with that letter</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Shuffle Mode</p>
+                                    <p>Tap the shuffle icon in the footer to randomise station order. Tap again to return to alphabetical.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Filter by Mood</p>
+                                    <p>Tap the mood emoji button in the footer to filter stations by your vibe. Tap the button again to clear the filter.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Filter by Genre</p>
+                                    <p>Tap the genre button to filter by style and tap again to clear.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Station Index</p>
+                                    <p>Tap the list icon to browse all stations. Tap any station to start playing it. Each station links to its source website.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Coin Animations</p>
+                                    <p>Tap the circles button to open the animation menu. Choose and control five modes:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li>Float {'\u2013'} layered sine-wave drift (Still {'\u2192'} Tumble)</li>
+                                        <li>Ripple {'\u2013'} sonar pulse rings (Slow {'\u2192'} Rapid)</li>
+                                        <li>Aerotrim {'\u2013'} gyroscope tumble with rings (Drift {'\u2192'} Chaos)</li>
+                                        <li>Boom {'\u2013'} heartbeat scale pulse (60 {'\u2192'} 170 BPM)</li>
+                                        <li>Bloom {'\u2013'} radioactive glow (Crisp {'\u2192'} Blinding)</li>
+                                    </ul>
+                                    <p className="mt-2">Use the slider to adjust intensity.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Night Mode</p>
+                                    <p>Tap the moon icon to toggle dark/light mode. Your preference is saved.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Add as an App to Home Screen</p>
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        <li>iPhone/iPad (Safari): Tap the Share button (square with arrow) {'\u2192'} Add to Home Screen</li>
+                                        <li>Android (Chrome): Tap the three-dot menu ({'\u22EE'}) {'\u2192'} Add to Home Screen</li>
+                                        <li>Desktop (Chrome): Click the three-dot menu ({'\u22EE'}) {'\u2192'} Save and Share {'\u2192'} Install Page as App</li>
+                                    </ul>
+                                    <p className="mt-2">RELAY RAD.IO runs as a full-screen web app with its own icon {'\u2013'} no browser bars, just music.</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold mb-1">Keyboard Shortcuts (Desktop)</p>
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        <li>Space {'\u2013'} play/pause</li>
+                                        <li>{'\u2190'}/{'\u2192'} arrows {'\u2013'} previous/next station</li>
+                                        <li>Any letter {'\u2013'} jump to nearest station</li>
+                                        <li>Escape {'\u2013'} close overlays</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </CollapsibleSection>
 
+                        {/* Who Made It? */}
+                        <CollapsibleSection title="Who Made It?" titleColor={colors.yellow} colors={colors}>
+                            <p>Hi, I'm <a href="https://www.timnoakes.com/" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Tim</a>. I've spent a lifetime obsessed with the radio as a listener, host, and curator. From producing student radio to scouting talent for <span className="font-bold">Radio X</span>, leading editorial at <span className="font-bold">Boiler Room</span>, and launching <span className="font-bold">Dazed</span>'s playlists in the noughties, to being a founding DJ at <span className="font-bold">NTS Radio</span> (hosting the <a href="https://www.timnoakes.com/ntslive" target="_blank" rel="noopener noreferrer" className="hover:underline font-bold" style={{ color: colors.text }}>Synth Hero Show</a> from 2011 to 2019), my career has been defined by finding incredible music and passing it on to others.</p>
+                            <p>RELAY RAD.IO is my latest audio adventure: a sidequest designed to help you bypass the streaming algorithm and discover your new favourite frequency.</p>
+                            <p>If you'd like to discuss the project, have a station recommendation, or need help building your own platform, I'd love to hear from you: <a href="mailto:tim@jotter.media" className="hover:underline font-bold" style={{ color: colors.text }}>tim@jotter.media</a></p>
+                        </CollapsibleSection>
 
-                        <section className="space-y-8 pt-12 border-t" style={{ borderColor: colors.border }}>
-                            <h4 className="font-young-serif text-2xl sm:text-3xl font-black tracking-tight leading-tight uppercase" style={{ color: colors.yellow }}>Boost Your Signal</h4>
-                            <p>The following indie radio projects have all helped inspire RELAY RAD.IO. Please explore them in depth and support their creators.</p>
-                            <div className="grid gap-8">
+                        {/* Signal Boosters */}
+                        <CollapsibleSection title="Signal Boosters" titleColor={colors.teal} colors={colors}>
+                            <p>The following curators and coders are at the forefront of rethinking the modern radio experience. Each values curation and innovation over content and noise. They have all inspired me immensely. Please explore and support their projects.</p>
+                            <div className="grid gap-6 mt-4">
                                 {INSPIRATION_LINKS.map((link) => (
-                                    <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer" className="group block space-y-2 pb-6 -mx-4 px-4 rounded-xl transition-all outline-none" 
+                                    <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer" className="group block space-y-2 pb-4 -mx-4 px-4 rounded-xl transition-all outline-none"
                                         onMouseEnter={e => e.currentTarget.style.backgroundColor = colors.bg === '#000000' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'}
-                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        style={{ borderColor: colors.border }}>
+                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                                         <div className="flex items-center justify-between">
-                                            <span className="font-young-serif text-xl font-black tracking-tight uppercase group-hover:underline" style={{ color: colors.text }}>{link.name}</span>
-                                            <Icon name="external-link" size="18" className="opacity-20 group-hover:opacity-40 transition-opacity" />
+                                            <span className="font-young-serif text-lg font-black tracking-tight uppercase group-hover:underline" style={{ color: colors.text }}>{link.name}</span>
+                                            <Icon name="external-link" size="16" className="opacity-20 group-hover:opacity-40 transition-opacity" />
                                         </div>
-                                        <span className="opacity-60 leading-relaxed block">{link.desc}</span>
+                                        <span className="opacity-60 leading-relaxed block text-sm">{link.desc}</span>
                                     </a>
                                 ))}
                             </div>
-                        </section>
+                        </CollapsibleSection>
 
+                        {/* Disclaimer */}
+                        <CollapsibleSection title="Disclaimer" titleColor={colors.text} colors={colors}>
+                            <div className="text-[10px] sm:text-xs uppercase tracking-widest leading-relaxed opacity-50 font-bold space-y-4">
+                                <p>RELAY RAD.IO is a non-commercial, open-source project. We do not host, store, reproduce, or modify any audio content. All streams are delivered directly from their respective station servers, we simply provide a relay link to publicly available streams.</p>
+                                <p>All station names, logos, and branding remain the property of their respective owners. If you are a station owner and would like your station added or removed, please <a href="mailto:tim@jotter.media" className="hover:underline" style={{ color: colors.text }}>get in touch</a>.</p>
+                                <p>RELAY RAD.IO is not affiliated with, endorsed by, or sponsored by any of the stations listed. No revenue is generated from this project. We encourage all users to visit and support the stations directly. Links are provided in the station index.</p>
+                                <p>This project does not collect, store, or transmit any personal data. Preferences (such as night mode and last played station) are stored locally on your device only and are never sent to any server.</p>
+                            </div>
+                        </CollapsibleSection>
 
-                        <section className="space-y-6 pt-12 border-t text-[10px] sm:text-xs uppercase tracking-widest leading-relaxed opacity-40 font-black" style={{ borderColor: colors.border }}>
-                            <h5 className="font-young-serif text-xl font-black uppercase tracking-tight" style={{ color: colors.text }}>Disclaimer</h5>
-                            <p>RELAY RAD.IO is strictly a non-commercial project dedicated to the appreciation of internet radio. We do not host, store, or modify any audio content.</p>
-                            <p>All intellectual property, copyright, and licensing for the broadcasts belong exclusively to the original stations. If you are a rights holder and would prefer your stream not to be included, please contact us for immediate removal.</p>
-                        </section>
                     </div>
                 </div>
             </div>
