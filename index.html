@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon-precomposed" href="icons/icon-180x180.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96x96.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
     <meta name="description" content="Find your signal. Escape the algorithm. A human-curated internet radio player featuring 80+ indie stations filtered by mood, genre, and vibe.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.relayrad.io/">
@@ -637,6 +638,10 @@
                         setDisplayedName(station.name);
                         const meta = await fetchMetadata(station);
                         setDisplayedDesc(meta);
+                        // Request wake lock to keep audio playing with screen off
+                        if ('wakeLock' in navigator) {
+                            navigator.wakeLock.request('screen').catch(() => {});
+                        }
                     })
                     .catch(err => {
                         if (err.name !== 'AbortError') {
@@ -676,7 +681,13 @@
                 if (isPlaying) { audioTagRef.current.pause(); setIsPlaying(false); }
                 else {
                     audioTagRef.current.play()
-                        .then(() => setIsPlaying(true))
+                        .then(() => {
+                            setIsPlaying(true);
+                            // Request wake lock to keep audio playing with screen off
+                            if ('wakeLock' in navigator) {
+                                navigator.wakeLock.request('screen').catch(() => {});
+                            }
+                        })
                         .catch(() => connectToStream(currentStation.url, currentStation));
                 }
             }, [hasStarted, isPlaying, initAudio, connectToStream]);
@@ -1926,6 +1937,14 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+    </script>
+    <script>
+        // Register service worker for offline fallback and background audio
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>
