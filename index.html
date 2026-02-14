@@ -1680,6 +1680,40 @@
             }, [nav.currentStation, audio.hasStarted]);
 
 
+            // Media Session API — OS media controls & hardware media keys
+            useEffect(() => {
+                if (!('mediaSession' in navigator)) return;
+                const station = nav.currentStation;
+                if (!station) return;
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: audio.displayedName || station.name,
+                    artist: station.desc || '',
+                    album: 'RELAY RAD.IO'
+                });
+            }, [nav.currentStation, audio.displayedName]);
+
+            useEffect(() => {
+                if (!('mediaSession' in navigator)) return;
+                navigator.mediaSession.playbackState = audio.isPlaying ? 'playing' : 'paused';
+            }, [audio.isPlaying]);
+
+            useEffect(() => {
+                if (!('mediaSession' in navigator)) return;
+                navigator.mediaSession.setActionHandler('play', () => handleTogglePlay());
+                navigator.mediaSession.setActionHandler('pause', () => handleTogglePlay());
+                navigator.mediaSession.setActionHandler('previoustrack', () => nav.handlePrevious());
+                navigator.mediaSession.setActionHandler('nexttrack', () => nav.handleNext());
+                return () => {
+                    try {
+                        navigator.mediaSession.setActionHandler('play', null);
+                        navigator.mediaSession.setActionHandler('pause', null);
+                        navigator.mediaSession.setActionHandler('previoustrack', null);
+                        navigator.mediaSession.setActionHandler('nexttrack', null);
+                    } catch(e) {}
+                };
+            }, [handleTogglePlay, nav.handleNext, nav.handlePrevious]);
+
+
             useEffect(() => {
                 // Update CSS variables for the body and root buttons to follow theme
                 const body = document.getElementById('app-body');
