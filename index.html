@@ -952,7 +952,7 @@
                 ripple: ['Slow', 'Rapid'],
                 orbit: ['Drift', 'Chaos'],
                 bloom: ['Crisp', 'Blinding'],
-                orbit: ['Calm', 'Warp']
+                balloon: ['Chill', 'Pumped']
             };
             const [sliderLabelLeft, sliderLabelRight] = sliderLabels[movementMode] || ['Still', 'Wild'];
 
@@ -1088,6 +1088,13 @@
 
             const intensityRef = React.useRef(spinIntensity / 100);
             React.useEffect(() => { intensityRef.current = spinIntensity / 100; }, [spinIntensity]);
+
+            const flipBurstRef = React.useRef(0);
+            React.useEffect(() => {
+                if (flipState && movementMode === 'balloon') {
+                    flipBurstRef.current = 1.0;
+                }
+            }, [flipState, movementMode]);
 
 
             const shapeClass = 'shape-circle';
@@ -1354,10 +1361,17 @@
                     // Speed multiplier from slider
                     const speedMult = 0.3 + s * 2.5;
                     
+                    // Flip burst on station change
+                    const burst = flipBurstRef.current;
+                    if (burst > 0) {
+                        flipBurstRef.current = Math.max(0, burst - dt * 1.2);
+                    }
+                    const totalSpeed = speedMult + burst * 12;
+                    
                     // Spin coin on all axes at non-synchronized speeds
-                    coinGroup.rotation.x += dt * 0.7 * speedMult;
-                    coinGroup.rotation.y += dt * 1.1 * speedMult;
-                    coinGroup.rotation.z += dt * 0.4 * speedMult;
+                    coinGroup.rotation.x += dt * 0.7 * totalSpeed;
+                    coinGroup.rotation.y += dt * 1.1 * totalSpeed;
+                    coinGroup.rotation.z += dt * 0.4 * totalSpeed;
                     
                     // Trace spawn rate scales with intensity
                     traceTimer += dt;
