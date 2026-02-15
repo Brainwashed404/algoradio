@@ -1089,12 +1089,11 @@
             const intensityRef = React.useRef(spinIntensity / 100);
             React.useEffect(() => { intensityRef.current = spinIntensity / 100; }, [spinIntensity]);
 
-            const flipBurstRef = React.useRef({ active: false, progress: 0, axis: 'y', direction: 1 });
+            const flipTriggerRef = React.useRef(0);
             const wasLoadingRef = React.useRef(false);
             React.useEffect(() => {
                 if (isLoading && !wasLoadingRef.current && movementMode === 'balloon') {
-                    const dir = isShuffleMode ? 1 : 1;
-                    flipBurstRef.current = { pending: true, active: false, progress: 0, axis: 'y', direction: 1, startX: 0, startY: 0 };
+                    flipTriggerRef.current = Date.now();
                 }
                 wasLoadingRef.current = isLoading;
             }, [isLoading, movementMode, isShuffleMode]);
@@ -1354,6 +1353,10 @@
                 // Animation loop
                 let animId;
                 const clock = new THREE.Clock();
+                let lastFlipTime = 0;
+                let flipProgress = 0;
+                let flipStartY = 0;
+                let flipping = false;
                 
                 const animate = () => {
                     animId = requestAnimationFrame(animate);
@@ -1364,46 +1367,32 @@
                     // Speed multiplier from slider
                     const speedMult = 0.3 + s * 2.5;
                     
-                    // Flip burst on station change — full 360 spin
-                    const fb = flipBurstRef.current;
-                    if (fb.pending) {
-                        fb.pending = false;
-                        fb.active = true;
-                        fb.startX = coinGroup.rotation.x;
-                        fb.startY = coinGroup.rotation.y;
+                    // Flip burst on station change
+                    const triggerTime = flipTriggerRef.current;
+                    if (triggerTime > lastFlipTime) {
+                        lastFlipTime = triggerTime;
+                        flipProgress = 0;
+                        flipStartY = coinGroup.rotation.y;
+                        flipping = true;
                     }
-                    if (fb.active) {
-                        fb.progress += dt * 1.8;
-                        if (fb.progress >= 1) {
-                            fb.active = false;
-                            fb.progress = 0;
+                    if (flipping) {
+                        flipProgress += dt * 1.8;
+                        if (flipProgress >= 1) {
+                            flipping = false;
                         } else {
-                            // Ease-out cubic for smooth deceleration
-                            const raw = fb.progress;
-                            const eased = 1 - Math.pow(1 - raw, 3);
-                            const flipAmount = eased * Math.PI * 2 * fb.direction;
-                            if (fb.axis === 'y') {
-                                coinGroup.rotation.y = fb.startY + flipAmount;
-                            } else {
-                                coinGroup.rotation.x = fb.startX + flipAmount;
-                            }
+                            const eased = 1 - Math.pow(1 - flipProgress, 3);
+                            coinGroup.rotation.y = flipStartY + eased * Math.PI * 2;
                         }
                     }
                     
-                    // Spin coin on all axes at non-synchronized speeds
-                    if (!fb.active) {
+                    // Spin coin on all axes
+                    if (!flipping) {
                         coinGroup.rotation.x += dt * 0.7 * speedMult;
                         coinGroup.rotation.y += dt * 1.1 * speedMult;
                         coinGroup.rotation.z += dt * 0.4 * speedMult;
                     } else {
-                        // During flip, still spin the non-flip axes gently
-                        if (fb.axis === 'y') {
-                            coinGroup.rotation.x += dt * 0.7 * speedMult;
-                            coinGroup.rotation.z += dt * 0.4 * speedMult;
-                        } else {
-                            coinGroup.rotation.y += dt * 1.1 * speedMult;
-                            coinGroup.rotation.z += dt * 0.4 * speedMult;
-                        }
+                        coinGroup.rotation.x += dt * 0.7 * speedMult;
+                        coinGroup.rotation.z += dt * 0.4 * speedMult;
                     }
                     
                     // Trace spawn rate scales with intensity
