@@ -1090,13 +1090,14 @@
             React.useEffect(() => { intensityRef.current = spinIntensity / 100; }, [spinIntensity]);
 
             const flipBurstRef = React.useRef({ active: false, progress: 0, axis: 'y', direction: 1 });
+            const wasLoadingRef = React.useRef(false);
             React.useEffect(() => {
-                if (flipState && movementMode === 'balloon') {
-                    const isX = flipState.startsWith('x');
-                    const isReverse = flipState.includes('reverse');
-                    flipBurstRef.current = { pending: true, active: false, progress: 0, axis: isX ? 'x' : 'y', direction: isReverse ? -1 : 1, startX: 0, startY: 0 };
+                if (isLoading && !wasLoadingRef.current && movementMode === 'balloon') {
+                    const dir = isShuffleMode ? 1 : 1;
+                    flipBurstRef.current = { pending: true, active: false, progress: 0, axis: 'y', direction: 1, startX: 0, startY: 0 };
                 }
-            }, [flipState, movementMode]);
+                wasLoadingRef.current = isLoading;
+            }, [isLoading, movementMode, isShuffleMode]);
 
 
             const shapeClass = 'shape-circle';
