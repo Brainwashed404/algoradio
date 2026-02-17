@@ -1,7 +1,7 @@
 {
   "name": "RELAY RAD.IO",
   "short_name": "RELAY RAD.IO",
-  "description": "Internet Radio",
+  "description": "Find Your Signal. Escape The Algorithm.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#000000",
