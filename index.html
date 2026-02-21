@@ -706,18 +706,8 @@
                         if ('wakeLock' in navigator) {
                             navigator.wakeLock.request('screen').catch(() => {});
                         }
-                        // Reclaim audio focus and re-assert metadata on play
+                        // Reclaim audio focus from other apps (Spotify fix)
                         if ('mediaSession' in navigator) {
-                            navigator.mediaSession.metadata = new MediaMetadata({
-                                title: 'RELAY RAD.IO',
-                                artist: 'Find Your Signal. Escape The Algorithm.',
-                                album: station.name,
-                                artwork: [
-                                    { src: 'https://www.relayrad.io/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
-                                    { src: 'https://www.relayrad.io/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-                                    { src: 'https://www.relayrad.io/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
-                                ]
-                            });
                             navigator.mediaSession.playbackState = 'playing';
                         }
                     })
@@ -2078,14 +2068,11 @@
                 const station = nav.currentStation;
                 if (!station) return;
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: 'RELAY RAD.IO',
-                    artist: 'Find Your Signal. Escape The Algorithm.',
-                    album: audio.displayedName || station.name,
+                    title: audio.displayedName || station.name,
+                    artist: station.desc || '',
+                    album: 'RELAY RAD.IO',
                     artwork: [
-                        { src: 'https://www.relayrad.io/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
-                        { src: 'https://www.relayrad.io/icons/icon-128x128.png', sizes: '128x128', type: 'image/png' },
                         { src: 'https://www.relayrad.io/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-                        { src: 'https://www.relayrad.io/icons/icon-384x384.png', sizes: '384x384', type: 'image/png' },
                         { src: 'https://www.relayrad.io/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
                     ]
                 });
