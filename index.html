@@ -143,6 +143,8 @@
             background: transparent;
             outline: none;
             height: 24px;
+            touch-action: none;
+            -webkit-touch-callout: none;
         }
         .coin-slider-lg::-webkit-slider-runnable-track {
             height: 4px;
@@ -987,6 +989,10 @@
                     if (progress < 1) { fadeRafRef.current = requestAnimationFrame(animate); }
                     else {
                         setIsFading(false); fadeRafRef.current = null;
+                        if (endVal >= 0.99) {
+                            const st = bDeckStationRef.current;
+                            if (st) window.dispatchEvent(new CustomEvent('fx-commit-b', { detail: st }));
+                        }
                     }
                 };
                 fadeRafRef.current = requestAnimationFrame(animate);
@@ -1115,7 +1121,7 @@
                 try { sirenRef.current.lfo.type = sirenLfoWave; } catch(e) {}
             }, [sirenVcoWave, sirenLfoWave]);
 
-            const isAnyFxActive = (isDelayOn && delayWet > 0) || (isReverbOn && reverbWet > 0) || (isFilterOn && Math.abs(filterPos - 0.5) > 0.02) || isSirenActive || isSirenDrone || crossfadeValue > 0 || isFxMuted;
+            const isAnyFxActive = (isDelayOn && delayWet > 0) || (isReverbOn && reverbWet > 0) || (isFilterOn && Math.abs(filterPos - 0.5) > 0.02) || isSirenActive || isSirenDrone;
 
             return {
                 fxEnabled, fxAttempted, isAnyFxActive,
@@ -1620,7 +1626,9 @@
                         <div className="flex items-center gap-4 w-full py-2">
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelLeft}</span>
                             <input type="range" min="0" max="100" value={spinIntensity} onChange={e => setSpinIntensity(Number(e.target.value))} 
-                                   className="coin-slider-lg flex-grow" style={{ cursor: 'pointer' }} />
+                                   onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                                   onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
+                                   className="coin-slider-lg flex-grow" style={{ cursor: 'pointer', touchAction: 'none' }} />
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelRight}</span>
                         </div>
                     </div>
@@ -1637,8 +1645,8 @@
                 <span className="text-[9px] font-black tracking-widest uppercase opacity-50 w-16 text-right whitespace-nowrap" style={{ color: colors.text }}>{label}</span>
                 <input type="range" min={min} max={max} step={step || 1} value={value}
                     onChange={e => onChange(Number(e.target.value))}
-                    onTouchStart={e => e.stopPropagation()}
-                    onTouchMove={e => e.stopPropagation()}
+                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                    onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                     className="fx-slider flex-grow"
                     style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
                 <span className="text-[9px] font-mono opacity-40 w-14 whitespace-nowrap" style={{ color: colors.text }}>{displayValue}</span>
@@ -1676,7 +1684,7 @@
                               border: '1px solid ' + (colors.isNight ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') }}>
                     {options.map(opt => (
                         <button key={opt.value} onClick={() => onChange(opt.value)}
-                            className="px-3.5 py-1.5 rounded-full text-[9px] font-black tracking-[0.12em] uppercase transition-all"
+                            className="px-2.5 py-1.5 rounded-full text-[8px] sm:text-[9px] font-black tracking-[0.08em] sm:tracking-[0.12em] uppercase transition-all"
                             style={{
                                 backgroundColor: value === opt.value ? 'var(--yellow)' : 'transparent',
                                 color: value === opt.value ? '#000' : colors.text,
@@ -1756,8 +1764,8 @@
                               style={{ color: labelColor }}>{label}</span>
                         <input type="range" min={min} max={max} step={step || 0.01} value={value}
                             onChange={e => onChange(Number(e.target.value))}
-                            onTouchStart={e => e.stopPropagation()}
-                            onTouchMove={e => e.stopPropagation()}
+                            onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                            onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                             className="fx-slider flex-grow"
                             style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
                         <span className="text-[9px] font-mono w-14 whitespace-nowrap text-right"
@@ -1840,7 +1848,9 @@
 
                     {/* ===== COIN TAB - transparent overlay, controls at bottom ===== */}
                     {isCoin && (
-                        <div className="flex-grow flex flex-col items-center justify-end px-4" style={{ paddingBottom: window.innerHeight > 650 ? '11rem' : '3rem' }}>
+                        <div className="flex-grow flex flex-col items-center justify-end px-4"
+                             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+                             style={{ paddingBottom: window.innerHeight > 650 ? '11rem' : '3rem', cursor: 'default' }}>
                             {/* Controls card - semi-opaque for visibility over transparent overlay */}
                             <div className="w-full max-w-md rounded-2xl p-5 sm:p-6" style={{
                                 backgroundColor: isNightMode ? 'rgba(30,30,28,0.9)' : 'rgba(248,247,240,0.92)',
@@ -1854,15 +1864,15 @@
                                          style={{
                                              backgroundColor: isNightMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                                              border: '1px solid ' + (isNightMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
-                                             borderRadius: '9999px',
-                                             padding: '4px'
+                                             borderRadius: '16px',
+                                             padding: '6px 10px'
                                          }}>
                                         {['float','ripple','orbit','boom','bloom','balloon'].map(mode => (
                                             <button key={mode} onClick={() => setMovementMode(mode)}
                                                 className="py-2 rounded-full text-[9px] font-black tracking-[0.1em] uppercase transition-all whitespace-nowrap text-center"
                                                 style={{
-                                                    paddingLeft: movementMode === mode ? '14px' : '10px',
-                                                    paddingRight: movementMode === mode ? '14px' : '10px',
+                                                    paddingLeft: movementMode === mode ? '16px' : '12px',
+                                                    paddingRight: movementMode === mode ? '16px' : '12px',
                                                     backgroundColor: movementMode === mode ? 'var(--yellow)' : 'transparent',
                                                     color: movementMode === mode ? '#000' : colors.text,
                                                     opacity: movementMode === mode ? 1 : 0.4,
@@ -1879,7 +1889,7 @@
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">{sliderLabelLeft}</span>
                                     <input type="range" min="0" max="100" value={spinIntensity}
                                         onChange={e => setSpinIntensity(Number(e.target.value))}
-                                        onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}
+                                        onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                                         className="fx-slider flex-grow" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">{sliderLabelRight}</span>
                                 </div>
@@ -1941,7 +1951,7 @@
                                         </div>
                                         <input type="range" min={0} max={1} step={0.01} value={fx.crossfadeValue}
                                             onChange={e => { if (!fx.isFading && fx.isBDeckReady) fx.setCrossfadeValue(Number(e.target.value)); }}
-                                            onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}
+                                            onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                                             className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }}
                                             disabled={!fx.bDeckStation || !fx.isBDeckReady} />
                                     </div>
@@ -1974,7 +1984,7 @@
                                                     style={{ color: 'var(--teal)' }}>A VOL</span>
                                                 <input type="range" min={0} max={1} step={0.01} value={fx.aDeckVolume}
                                                     onChange={e => fx.setADeckVolume(Number(e.target.value))}
-                                                    onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}
+                                                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                                                     className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
                                             </div>
                                             <div className="flex-1">
@@ -1982,7 +1992,7 @@
                                                     style={{ color: 'var(--yellow)' }}>B VOL</span>
                                                 <input type="range" min={0} max={1} step={0.01} value={fx.bDeckVolume}
                                                     onChange={e => fx.setBDeckVolume(Number(e.target.value))}
-                                                    onTouchStart={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}
+                                                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                                                     className="fx-slider w-full" style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
                                             </div>
                                         </div>
@@ -2068,15 +2078,15 @@
                                         <div className="relative flex items-center justify-center select-none"
                                             style={{ width: '180px', height: '180px', cursor: 'pointer' }}
                                             onTouchStart={(e) => { e.preventDefault(); fx.setIsSirenActive(true); }}
-                                            onTouchEnd={() => { if (!fx.isSirenDrone) fx.setIsSirenActive(false); }}
-                                            onTouchCancel={() => { if (!fx.isSirenDrone) fx.setIsSirenActive(false); }}
+                                            onTouchEnd={() => fx.setIsSirenActive(false)}
+                                            onTouchCancel={() => fx.setIsSirenActive(false)}
                                             onMouseDown={() => fx.setIsSirenActive(true)}
-                                            onMouseUp={() => { if (!fx.isSirenDrone) fx.setIsSirenActive(false); }}
-                                            onMouseLeave={() => { if (!fx.isSirenDrone) fx.setIsSirenActive(false); }}>
+                                            onMouseUp={() => fx.setIsSirenActive(false)}
+                                            onMouseLeave={() => fx.setIsSirenActive(false)}>
                                             <SirenCoinVisual active={fx.isSirenActive || fx.isSirenDrone} />
                                         </div>
                                         <div className="flex flex-col items-center gap-1.5">
-                                            <button onClick={() => { fx.setIsSirenDrone(!fx.isSirenDrone); if (!fx.isSirenDrone) fx.setIsSirenActive(true); else fx.setIsSirenActive(false); }}
+                                            <button onClick={() => { const newDrone = !fx.isSirenDrone; fx.setIsSirenDrone(newDrone); }}
                                                 className="w-12 h-12 rounded-full transition-all active:scale-90 flex items-center justify-center"
                                                 style={{
                                                     backgroundColor: fx.isSirenDrone ? 'rgba(239,68,68,0.12)' : 'transparent',
@@ -2101,7 +2111,7 @@
 
                                     {/* Waveform selectors in raised card */}
                                     <FxCard className="mt-4">
-                                        <div className="flex justify-center gap-6">
+                                        <div className="flex justify-center gap-3 sm:gap-6 overflow-hidden">
                                             <FxWaveformSelector label="VCO" options={[{value:'sine',label:'SIN'},{value:'triangle',label:'TRI'},{value:'square',label:'SQR'}]} value={fx.sirenVcoWave} onChange={fx.setSirenVcoWave} colors={{...colors, isNight: isNightMode}} />
                                             <FxWaveformSelector label="LFO" options={[{value:'triangle',label:'TRI'},{value:'square',label:'SQR'}]} value={fx.sirenLfoWave} onChange={fx.setSirenLfoWave} colors={{...colors, isNight: isNightMode}} />
                                             <FxWaveformSelector label="RATE" options={[{value:'lo',label:'LO'},{value:'hi',label:'HI'}]} value={fx.sirenRateMultiplier} onChange={(v) => {
@@ -3315,7 +3325,7 @@
 
                     {audio.hasStarted && (
                         <button onClick={() => setIsLandscapeMenuOpen(true)}
-                            className="absolute top-16 right-4 z-50 p-3 rounded-full transition-all duration-500 hover:scale-110 active:scale-90 outline-none hidden mobile-landscape-only items-center justify-center"
+                            className="absolute top-3 right-4 z-50 p-3 rounded-full transition-all duration-500 hover:scale-110 active:scale-90 outline-none hidden mobile-landscape-only items-center justify-center"
                             style={{ backgroundColor: isNightMode ? '#333333' : 'rgba(0,0,0,0.05)' }}>
                             <div className="relative w-6 h-6 flex items-center justify-center">
                                 <Icon name="menu" size="24" strokeWidth={1.5} fill="none" style={{ color: isNightMode ? '#fcfdf2' : '#000000' }} />
@@ -3404,7 +3414,7 @@
                             setIsNightMode={setIsNightMode}
                             isPlaying={audio.isPlaying}
                             flipState={flipState}
-                            onClose={() => { setIsFxHubOpen(false); setFxHubView('coin'); }}
+                            onClose={() => { setIsFxHubOpen(false); setFxHubView('coin'); if (fx.bDeckStation && fx.crossfadeValue < 0.95) { fx.stopBDeck(); } }}
                             hasStarted={audio.hasStarted}
                             currentStation={nav.currentStation}
                             spinIntensity={spinIntensity}
