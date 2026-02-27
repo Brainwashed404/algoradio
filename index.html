@@ -201,6 +201,12 @@
             background: var(--yellow); cursor: pointer;
             transition: none; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
+        .slider-touch-zone {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
         .fx-hold-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
         /* Ticker scroll for long station names */
@@ -970,12 +976,24 @@
                 else if (audioTagRef.current) audioTagRef.current.volume = aVol;
                 if (nodesRef.current) nodesRef.current.bDeckVolGain.gain.setValueAtTime(bVol, audioContextRef.current?.currentTime || 0);
                 if (!bDeckSourceRef.current && bDeckAudioRef.current) bDeckAudioRef.current.volume = bVol;
+                // Auto-play B-deck when crossfade moves toward B, pause when back to A
+                if (bDeckAudioRef.current && bDeckAudioRef.current.src) {
+                    if (crossfadeValue > 0.01 && bDeckAudioRef.current.paused && bDeckAudioRef.current.readyState >= 2) {
+                        bDeckAudioRef.current.play().catch(() => {});
+                    } else if (crossfadeValue <= 0.01 && !bDeckAudioRef.current.paused) {
+                        bDeckAudioRef.current.pause();
+                    }
+                }
             }, [crossfadeValue, aDeckVolume, bDeckVolume, audioContextRef, audioTagRef]);
 
             // --- Auto-crossfade (bidirectional: target 0=A, 1=B) ---
             const startAutoFade = useCallback((durationMs, target = 1) => {
                 if (!bDeckStationRef.current) return;
                 if (!bDeckAudioRef.current || bDeckAudioRef.current.readyState < 2) return;
+                // Ensure B-deck is playing before starting fade
+                if (target > 0 && bDeckAudioRef.current.paused) {
+                    bDeckAudioRef.current.play().catch(() => {});
+                }
                 if (fadeRafRef.current) cancelAnimationFrame(fadeRafRef.current);
                 const startTime = performance.now();
                 const startVal = crossfadeValue;
@@ -1022,15 +1040,13 @@
                                 bDeckAudioRef.current.volume = 1; // gain node handles volume now
                             } catch (e) { console.warn('B-deck Web Audio connection failed:', e); }
                         }
-                        // Set initial volume via appropriate path
-                        const angle = crossfadeValue * Math.PI / 2;
-                        const bVol = Math.sin(angle) * bDeckVolume;
-                        if (bDeckSourceRef.current && nodesRef.current) {
-                            nodesRef.current.bDeckVolGain.gain.setValueAtTime(bVol, audioContextRef.current.currentTime);
-                        } else {
-                            bDeckAudioRef.current.volume = bVol;
+                        // Set initial volume to 0; crossfade useEffect manages volume
+                        if (nodesRef.current) {
+                            nodesRef.current.bDeckVolGain.gain.setValueAtTime(0, audioContextRef.current.currentTime);
                         }
-                        bDeckAudioRef.current.play().catch(() => {});
+                        bDeckAudioRef.current.volume = 0;
+                        // Don't auto-play; crossfade useEffect will call play() when needed
+                        bDeckAudioRef.current.load();
                     }
                 });
             }, [crossfadeValue, bDeckVolume, audioContextRef]);
@@ -1626,8 +1642,6 @@
                         <div className="flex items-center gap-4 w-full py-2">
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelLeft}</span>
                             <input type="range" min="0" max="100" value={spinIntensity} onChange={e => setSpinIntensity(Number(e.target.value))} 
-                                   onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                                   onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
                                    className="coin-slider-lg flex-grow" style={{ cursor: 'pointer', touchAction: 'none' }} />
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelRight}</span>
                         </div>
@@ -1643,12 +1657,14 @@
         const FxSlider = ({ label, value, min, max, step, onChange, displayValue, colors, disabled }) => (
             <div className={`flex items-center gap-3 w-full py-1 transition-opacity ${disabled ? 'opacity-25 pointer-events-none' : ''}`}>
                 <span className="text-[9px] font-black tracking-widest uppercase opacity-50 w-16 text-right whitespace-nowrap" style={{ color: colors.text }}>{label}</span>
-                <input type="range" min={min} max={max} step={step || 1} value={value}
-                    onChange={e => onChange(Number(e.target.value))}
-                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                    onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                    className="fx-slider flex-grow"
-                    style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                <div className="slider-touch-zone flex-grow"
+                    onTouchStart={e => e.stopPropagation()}
+                    onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                    <input type="range" min={min} max={max} step={step || 1} value={value}
+                        onChange={e => onChange(Number(e.target.value))}
+                        className="fx-slider w-full"
+                        style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                </div>
                 <span className="text-[9px] font-mono opacity-40 w-14 whitespace-nowrap" style={{ color: colors.text }}>{displayValue}</span>
             </div>
         );
@@ -1762,12 +1778,14 @@
                     <div className={`flex items-center gap-3 w-full py-1.5 ${disabled ? 'opacity-20 pointer-events-none' : ''}`}>
                         <span className="text-[9px] font-black tracking-widest uppercase w-20 text-right whitespace-nowrap"
                               style={{ color: labelColor }}>{label}</span>
-                        <input type="range" min={min} max={max} step={step || 0.01} value={value}
-                            onChange={e => onChange(Number(e.target.value))}
-                            onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }}
-                            onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                            className="fx-slider flex-grow"
-                            style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
+                        <div className="slider-touch-zone flex-grow"
+                            onTouchStart={e => e.stopPropagation()}
+                            onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                            <input type="range" min={min} max={max} step={step || 0.01} value={value}
+                                onChange={e => onChange(Number(e.target.value))}
+                                className="fx-slider w-full"
+                                style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
+                        </div>
                         <span className="text-[9px] font-mono w-14 whitespace-nowrap text-right"
                               style={{ color: valueColor }}>{displayValue}</span>
                     </div>
@@ -1887,10 +1905,13 @@
                                 {/* Intensity slider */}
                                 <div className="flex items-center gap-4 w-full">
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">{sliderLabelLeft}</span>
-                                    <input type="range" min="0" max="100" value={spinIntensity}
-                                        onChange={e => setSpinIntensity(Number(e.target.value))}
-                                        onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                                        className="fx-slider flex-grow" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                                    <div className="slider-touch-zone flex-grow"
+                                        onTouchStart={e => e.stopPropagation()}
+                                        onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                                        <input type="range" min="0" max="100" value={spinIntensity}
+                                            onChange={e => setSpinIntensity(Number(e.target.value))}
+                                            className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                                    </div>
                                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">{sliderLabelRight}</span>
                                 </div>
                             </div>
@@ -1899,7 +1920,7 @@
 
                     {/* ===== SCROLLABLE CONTENT - MIX and SIREN only ===== */}
                     {!isCoin && (
-                        <div className="flex-grow overflow-y-auto px-4 pb-12 custom-scrollbar scroll-smooth">
+                        <div className="flex-grow overflow-y-auto px-4 pb-12 custom-scrollbar scroll-smooth" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
                             <div className="max-w-lg mx-auto">
 
                                 {/* ===== MIX TAB ===== */}
@@ -1949,11 +1970,14 @@
                                             <span className="text-[9px] font-mono opacity-30" style={{ color: colors.text }}>A</span>
                                             <span className="text-[9px] font-mono opacity-30" style={{ color: colors.text }}>B</span>
                                         </div>
-                                        <input type="range" min={0} max={1} step={0.01} value={fx.crossfadeValue}
-                                            onChange={e => { if (!fx.isFading && fx.isBDeckReady) fx.setCrossfadeValue(Number(e.target.value)); }}
-                                            onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                                            className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }}
-                                            disabled={!fx.bDeckStation || !fx.isBDeckReady} />
+                                        <div className="slider-touch-zone"
+                                            onTouchStart={e => e.stopPropagation()}
+                                            onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                                            <input type="range" min={0} max={1} step={0.01} value={fx.crossfadeValue}
+                                                onChange={e => { if (!fx.isFading && fx.isBDeckReady) fx.setCrossfadeValue(Number(e.target.value)); }}
+                                                className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }}
+                                                disabled={!fx.bDeckStation || !fx.isBDeckReady} />
+                                        </div>
                                     </div>
 
                                     {/* A->B | MANUAL | B->A */}
@@ -1982,18 +2006,24 @@
                                             <div className="flex-1">
                                                 <span className="text-[9px] font-black tracking-widest uppercase block mb-2 text-center"
                                                     style={{ color: 'var(--teal)' }}>A VOL</span>
-                                                <input type="range" min={0} max={1} step={0.01} value={fx.aDeckVolume}
-                                                    onChange={e => fx.setADeckVolume(Number(e.target.value))}
-                                                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                                                    className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                                                <div className="slider-touch-zone"
+                                                    onTouchStart={e => e.stopPropagation()}
+                                                    onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                                                    <input type="range" min={0} max={1} step={0.01} value={fx.aDeckVolume}
+                                                        onChange={e => fx.setADeckVolume(Number(e.target.value))}
+                                                        className="fx-slider w-full" style={{ '--track-color': 'rgba(126,194,173,0.3)' }} />
+                                                </div>
                                             </div>
                                             <div className="flex-1">
                                                 <span className="text-[9px] font-black tracking-widest uppercase block mb-2 text-center"
                                                     style={{ color: 'var(--yellow)' }}>B VOL</span>
-                                                <input type="range" min={0} max={1} step={0.01} value={fx.bDeckVolume}
-                                                    onChange={e => fx.setBDeckVolume(Number(e.target.value))}
-                                                    onTouchStart={e => { e.stopPropagation(); e.preventDefault(); }} onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}
-                                                    className="fx-slider w-full" style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
+                                                <div className="slider-touch-zone"
+                                                    onTouchStart={e => e.stopPropagation()}
+                                                    onTouchMove={e => { e.stopPropagation(); e.preventDefault(); }}>
+                                                    <input type="range" min={0} max={1} step={0.01} value={fx.bDeckVolume}
+                                                        onChange={e => fx.setBDeckVolume(Number(e.target.value))}
+                                                        className="fx-slider w-full" style={{ '--track-color': 'rgba(229,184,74,0.3)' }} />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -3414,7 +3444,7 @@
                             setIsNightMode={setIsNightMode}
                             isPlaying={audio.isPlaying}
                             flipState={flipState}
-                            onClose={() => { setIsFxHubOpen(false); setFxHubView('coin'); if (fx.bDeckStation && fx.crossfadeValue < 0.95) { fx.stopBDeck(); } }}
+                            onClose={() => { setIsFxHubOpen(false); setFxHubView('coin'); if (fx.bDeckStation && fx.crossfadeValue < 0.95) { fx.stopBDeck(); } fx.setIsSirenActive(false); fx.setIsSirenDrone(false); }}
                             hasStarted={audio.hasStarted}
                             currentStation={nav.currentStation}
                             spinIntensity={spinIntensity}
