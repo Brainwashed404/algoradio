@@ -1016,7 +1016,7 @@
 
 
         // ==================== CUSTOM POINTER SLIDER ====================
-        const PointerSlider = ({ value, min, max, step, onChange, trackColor, disabled }) => {
+        const PointerSlider = ({ value, min, max, step, onChange, trackColor, thumbColor, disabled }) => {
             const trackRef = React.useRef(null);
             const dragging = React.useRef(false);
             const onChangeRef = React.useRef(onChange);
@@ -1081,7 +1081,7 @@
             return (
                 <div ref={trackRef} className="ptr-slider" style={{ opacity: disabled ? 0.25 : 1 }}>
                     <div className="ptr-slider-track" style={{ backgroundColor: trackColor || 'rgba(126,194,173,0.3)' }} />
-                    <div className="ptr-slider-thumb" style={{ left: `calc(${pct}% - 11px)` }} />
+                    <div className="ptr-slider-thumb" style={{ left: `calc(${pct}% - 11px)`, background: thumbColor || 'var(--yellow)' }} />
                 </div>
             );
         };
@@ -1089,68 +1089,46 @@
 
         const CoinMenuOverlay = ({ spinIntensity, setSpinIntensity, movementMode, setMovementMode, onClose, colors, isNightMode }) => {
             const sliderLabels = {
-                float: ['Still', 'Tumble'],
-                boom: ['60 BPM', '170 BPM'],
-                ripple: ['Slow', 'Rapid'],
-                orbit: ['Drift', 'Chaos'],
-                bloom: ['Crisp', 'Blinding'],
-                balloon: ['Chill', 'Pumped']
+                float: ['Still', 'Tumble'], boom: ['60 BPM', '170 BPM'],
+                ripple: ['Slow', 'Rapid'], orbit: ['Drift', 'Chaos'],
+                bloom: ['Crisp', 'Blinding'], balloon: ['Chill', 'Pumped']
             };
             const [sliderLabelLeft, sliderLabelRight] = sliderLabels[movementMode] || ['Still', 'Wild'];
-
+            const modes = ['float', 'ripple', 'orbit', 'boom', 'bloom', 'balloon'];
 
             return (
-                <div className="fixed inset-0 z-[90] flex justify-center items-end landscape:items-center pb-52 sm:pb-48 landscape:pb-0 animate-overlay-in" onClick={onClose}>
-                    <div className="relative flex flex-col items-center gap-4 landscape:gap-2 px-6 landscape:px-4 py-5 landscape:py-3 rounded-3xl backdrop-blur-2xl shadow-2xl min-w-[320px] max-h-[90vh] overflow-y-auto" style={{ backgroundColor: isNightMode ? 'rgba(20,20,20,0.95)' : 'rgba(252,252,245,0.98)', border: '1px solid ' + colors.border }} onClick={e => e.stopPropagation()}>
-                        
-                        {/* Header Row: Modes */}
-                        <div className="flex items-center gap-2 w-full justify-between mb-1">
-                            <div className="flex gap-2 landscape:gap-1 flex-wrap">
-                                <button onClick={() => setMovementMode('float')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'float' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'float' ? colors.bg : colors.text, backgroundColor: movementMode === 'float' ? colors.text : 'transparent' }}>
-                                    <Icon name="wind" size="12" /> FLOAT
-                                </button>
+                <div className="fixed bottom-0 left-0 right-0 z-[90] flex justify-center px-4 pb-4 pointer-events-none animate-overlay-in">
+                    <div className="pointer-events-auto relative flex flex-col gap-4 px-6 py-5 rounded-3xl w-full max-w-2xl"
+                        style={{ backgroundColor: isNightMode ? 'rgba(20,20,20,0.97)' : 'rgba(252,252,245,0.99)', border: '1px solid ' + colors.border, boxShadow: '0 -4px 40px rgba(0,0,0,0.1)' }}>
 
-                                <button onClick={() => setMovementMode('ripple')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'ripple' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'ripple' ? colors.bg : colors.text, backgroundColor: movementMode === 'ripple' ? colors.text : 'transparent' }}>
-                                    <Icon name="radar" size="12" /> RIPPLE
+                        {/* MODE label */}
+                        <span className="text-[9px] font-black tracking-[0.25em] uppercase text-center" style={{ color: colors.text, opacity: 0.35 }}>MODE</span>
+
+                        {/* Segmented control */}
+                        <div className="flex w-full rounded-2xl p-1" style={{ backgroundColor: isNightMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }}>
+                            {modes.map(mode => (
+                                <button key={mode} onClick={() => setMovementMode(mode)}
+                                    className="flex-1 py-2 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest uppercase transition-all"
+                                    style={{
+                                        backgroundColor: movementMode === mode ? 'var(--yellow)' : 'transparent',
+                                        color: movementMode === mode ? '#000' : colors.text,
+                                        opacity: movementMode === mode ? 1 : 0.45
+                                    }}>
+                                    {mode.toUpperCase()}
                                 </button>
-                                <button onClick={() => setMovementMode('orbit')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'orbit' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'orbit' ? colors.bg : colors.text, backgroundColor: movementMode === 'orbit' ? colors.text : 'transparent' }}>
-                                    <Icon name="rotate-3d" size="12" /> ORBIT
-                                </button>
-                                <button onClick={() => setMovementMode('boom')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'boom' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'boom' ? colors.bg : colors.text, backgroundColor: movementMode === 'boom' ? colors.text : 'transparent' }}>
-                                    <Icon name="heart-pulse" size="12" /> BOOM
-                                </button>
-                                <button onClick={() => setMovementMode('bloom')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'bloom' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'bloom' ? colors.bg : colors.text, backgroundColor: movementMode === 'bloom' ? colors.text : 'transparent' }}>
-                                    <Icon name="sun" size="12" /> BLOOM
-                                </button>
-                                <button onClick={() => setMovementMode('balloon')} 
-                                    className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-[10px] font-black tracking-widest uppercase transition-colors ${movementMode === 'balloon' ? 'bg-black text-[#fcfdf2] dark:bg-white dark:text-black' : 'bg-transparent border'}`}
-                                    style={{ borderColor: colors.border, color: movementMode === 'balloon' ? colors.bg : colors.text, backgroundColor: movementMode === 'balloon' ? colors.text : 'transparent' }}>
-                                    <Icon name="cloudy" size="12" /> BALLOON
-                                </button>
-                            </div>
-                            <button onClick={onClose} className="p-1 opacity-40 hover:opacity-100 transition-opacity" style={{ color: colors.text }}>
-                                <Icon name="x" size="16" />
-                            </button>
+                            ))}
                         </div>
 
-
-                        {/* Middle Row: Slider */}
-                        <div className="flex items-center gap-4 w-full py-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelLeft}</span>
+                        {/* Slider */}
+                        <div className="flex items-center gap-4 w-full">
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelLeft}</span>
                             <div className="flex-grow">
-                                <PointerSlider value={spinIntensity} min={0} max={100} step={1} onChange={v => setSpinIntensity(v)} trackColor="rgba(126,194,173,0.3)" />
+                                <PointerSlider value={spinIntensity} min={0} max={100} step={1}
+                                    onChange={v => setSpinIntensity(v)}
+                                    trackColor={isNightMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}
+                                    thumbColor="var(--teal)" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelRight}</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap" style={{ color: colors.text }}>{sliderLabelRight}</span>
                         </div>
                     </div>
                 </div>
