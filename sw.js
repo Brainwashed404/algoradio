@@ -1,4 +1,4 @@
-const CACHE_NAME = 'relayradio-v3';
+const CACHE_NAME = 'relayradio-v4';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline fallback
@@ -50,19 +50,27 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Fetch: network-first strategy, fall back to offline page for navigation
+// CDN origins that should be served cache-first (stale-while-revalidate)
+const CDN_ORIGINS = [
+  'https://unpkg.com',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com',
+  'https://fonts.gstatic.com'
+];
+
+const isCDN = (url) => CDN_ORIGINS.some(origin => url.startsWith(origin));
+
+// Fetch handler
 self.addEventListener('fetch', (event) => {
-  // Only handle navigation requests (page loads) for offline fallback
+  // Navigation requests: network-first, fall back to offline page
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(OFFLINE_URL);
-      })
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
     );
     return;
   }
 
-  // For audio streams, always go to network (never cache)
+  // Audio streams: always network, never cache
   if (event.request.url.includes('stream') ||
       event.request.url.includes('radiojar.com') ||
       event.request.url.includes('icecast') ||
@@ -72,19 +80,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For other requests: try network, fall back to cache
+  // CDN scripts/fonts: cache-first, revalidate in background
+  if (isCDN(event.request.url)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((cached) => {
+          const fetchAndUpdate = fetch(event.request).then((response) => {
+            if (response.ok) cache.put(event.request, response.clone());
+            return response;
+          }).catch(() => cached);
+          // Return cache immediately if available, else wait for network
+          return cached || fetchAndUpdate;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else: network-first, cache on success
   event.respondWith(
     fetch(event.request).then((response) => {
-      // Cache successful responses for fonts, icons etc
       if (response.ok && event.request.url.startsWith('https://')) {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
       }
       return response;
-    }).catch(() => {
-      return caches.match(event.request);
-    })
+    }).catch(() => caches.match(event.request))
   );
 });
